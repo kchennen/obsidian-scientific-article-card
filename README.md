@@ -12,9 +12,9 @@
 📄 Turn a **PMID, PMCID, DOI, arXiv ID or scientific article URL** into a rich metadata card in your notes: title, authors, journal, year/volume/issue/pages, abstract, preview image, DOI, PMID, PMCID and keywords.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./images/card-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="./images/card-light.png">
-  <img alt="Scientific Article Card rendering PMID 34265844 in Obsidian: title, authors, citation, DOI/PMID/PMC links, MeSH keywords, preview figure and the structured abstract" src="./images/card-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/card-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/card-light.png">
+  <img alt="Scientific Article Card rendering PMID 34265844 in Obsidian: title, authors, citation, DOI/PMID/PMC links, MeSH keywords, preview figure and the structured abstract" src="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/card-light.png">
 </picture>
 
 💡 Think [Auto Card Link](https://github.com/nekoshita/obsidian-auto-card-link), but for papers: instead of a generic web preview, metadata comes from scholarly databases.
@@ -56,9 +56,9 @@ Markdown links (`[text](url)`) and `<url>` are accepted too. Trailing `/full`, `
 ## 🚀 Usage
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./images/card-paste-dark.gif">
-  <source media="(prefers-color-scheme: light)" srcset="./images/card-paste-light.gif">
-  <img alt="Pasting PMID: 34265844 inserts a fetching placeholder, which is replaced by the article card; the abstract then expands" src="./images/card-paste-light.gif">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/card-paste-dark.gif">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/card-paste-light.gif">
+  <img alt="Pasting PMID: 34265844 inserts a fetching placeholder, which is replaced by the article card; the abstract then expands" src="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/card-paste-light.gif">
 </picture>
 
 - 📋 **Paste**: with *Enhance default paste* on, pasting a PubMed/PMC/DOI/arXiv link, a DOI, `PMID: …`, or a URL from a listed publisher domain turns it into a card once it lands in your note. Other URLs are left untouched.
