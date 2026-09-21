@@ -94,6 +94,23 @@ This plugin makes network requests **only when you convert an identifier** into 
 
 If you enter a contact email or NCBI API key in the settings, they are sent to NCBI (and the email to Crossref) as recommended by their usage policies. No other data is collected or transmitted, and there is no telemetry.
 
+## 📋 Clipboard use
+
+The plugin only **reads** the clipboard, and only when you ask it to. It never writes to the clipboard and never reads it in the background.
+
+- **When you paste** (with *Enhance default paste* on): it checks the text you are pasting. If it is a PMID, PMCID, DOI, arXiv ID or a supported article URL, the paste becomes a card. Anything else is pasted normally and untouched. Turn *Enhance default paste* off to disable this.
+- **When you run *Paste identifier / URL as article card*** (command palette or right-click menu): it reads the clipboard text once, to convert it.
+
+The clipboard content is never stored or logged. Only a recognized identifier is sent to the services listed under [Network use](#-network-use).
+
+## 🔐 Verifying releases
+
+Release files (`main.js`, `styles.css`, `manifest.json`) are built by GitHub Actions and carry [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds), so you can check that they came from this repository:
+
+```bash
+gh attestation verify main.js --repo kchennen/obsidian-scientific-article-card
+```
+
 ## 📦 Installation
 
 🧩 From Obsidian: **Settings → Community plugins → Browse**, search for *Scientific Article Card*.
