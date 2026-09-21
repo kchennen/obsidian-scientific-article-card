@@ -48,6 +48,12 @@ Markdown links (`[text](url)`) and `<url>` are accepted too. Trailing `/full`, `
 
 ## 🚀 Usage
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./images/card-paste-dark.gif">
+  <source media="(prefers-color-scheme: light)" srcset="./images/card-paste-light.gif">
+  <img alt="Pasting PMID: 34265844 inserts a fetching placeholder, which is replaced by the article card; the abstract then expands" src="./images/card-paste-light.gif">
+</picture>
+
 - 📋 **Paste**: with *Enhance default paste* on, pasting a PubMed/PMC/DOI/arXiv link, a DOI, `PMID: …`, or a URL from a listed publisher domain creates a card. Other URLs are left untouched (so it coexists with Auto Card Link).
 - ⌨️ **Commands**
   - *Paste identifier / URL as article card*
