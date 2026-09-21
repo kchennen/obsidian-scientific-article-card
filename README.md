@@ -1,5 +1,12 @@
 # 🔬 Scientific Article Card
 
+[![Release](https://img.shields.io/github/v/release/kchennen/obsidian-scientific-article-card?label=release&color=7c3aed)](https://github.com/kchennen/obsidian-scientific-article-card/releases/latest)
+[![Obsidian](https://img.shields.io/badge/Obsidian-1.4.0%2B-483699?logo=obsidian&logoColor=white)](https://obsidian.md)
+[![Downloads](https://img.shields.io/github/downloads/kchennen/obsidian-scientific-article-card/total?label=downloads&color=2ea043)](https://github.com/kchennen/obsidian-scientific-article-card/releases)
+[![Release build](https://img.shields.io/github/actions/workflow/status/kchennen/obsidian-scientific-article-card/release.yml?label=release%20build)](https://github.com/kchennen/obsidian-scientific-article-card/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/github/license/kchennen/obsidian-scientific-article-card?color=blue)](LICENSE)
+[![Data sources](https://img.shields.io/badge/data-PubMed%20%C2%B7%20Europe%20PMC%20%C2%B7%20Crossref%20%C2%B7%20arXiv-0b7285)](#-network-use)
+
 > Created by **[Kirsley Chennen](https://github.com/kchennen)**
 
 📄 Turn a **PMID, PMCID, DOI, arXiv ID or scientific article URL** into a rich metadata card in your notes: title, authors, journal, year/volume/issue/pages, abstract, preview image, DOI, PMID, PMCID and keywords.
