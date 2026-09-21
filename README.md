@@ -4,6 +4,8 @@
 
 📄 Turn a **PMID, PMCID, DOI, arXiv ID or scientific article URL** into a rich metadata card in your notes: title, authors, journal, year/volume/issue/pages, abstract, preview image, DOI, PMID, PMCID and keywords.
 
+![Scientific Article Card rendering PMID 34265844 in Obsidian: title, authors, citation, DOI/PMID/PMC links, MeSH keywords, preview figure and the structured abstract](./images/card-screenshot.png)
+
 💡 Think [Auto Card Link](https://github.com/nekoshita/obsidian-auto-card-link), but for papers: instead of a generic web preview, metadata comes from scholarly databases.
 
 ````

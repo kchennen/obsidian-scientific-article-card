@@ -123,6 +123,24 @@ function isoDate(y, m, d) {
 	return out;
 }
 
+const SUP = { 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹", "+": "⁺", "-": "⁻", "–": "⁻", "−": "⁻", "=": "⁼", "(": "⁽", ")": "⁾", n: "ⁿ", i: "ⁱ", ",": ",", " ": "" };
+const SUB = { 0: "₀", 1: "₁", 2: "₂", 3: "₃", 4: "₄", 5: "₅", 6: "₆", 7: "₇", 8: "₈", 9: "₉", "+": "₊", "-": "₋", "–": "₋", "−": "₋", "=": "₌", "(": "₍", ")": "₎", " ": "" };
+
+/** "1-4" -> "¹⁻⁴", so citation markers and exponents don't merge with the text (effort1-4, cm2). */
+function toScript(text, map) {
+	const chars = Array.from(clean(text));
+	return chars.every((c) => c in map) ? chars.map((c) => map[c]).join("") : chars.join("");
+}
+
+/** Replace <sup>/<sub> elements of an XML/HTML tree with Unicode super/subscript text. */
+function scriptifyTree(root) {
+	for (const [tag, map] of [["sup", SUP], ["sub", SUB]]) {
+		for (const el of Array.from(root.getElementsByTagName(tag))) {
+			el.replaceWith(el.ownerDocument.createTextNode(toScript(el.textContent, map)));
+		}
+	}
+}
+
 function parseXml(text) {
 	return new DOMParser().parseFromString(text, "text/xml");
 }
@@ -137,6 +155,8 @@ function htmlToText(html) {
 	let s = String(html)
 		.replace(/<(jats:)?title>\s*abstract\s*<\/(jats:)?title>/gi, "")
 		.replace(/<(h\d|jats:title|title)[^>]*>([\s\S]*?)<\/\1>/gi, "\n\n$2: ")
+		.replace(/<sup[^>]*>([\s\S]*?)<\/sup>/gi, (_, t) => toScript(t.replace(/<[^>]+>/g, ""), SUP))
+		.replace(/<sub[^>]*>([\s\S]*?)<\/sub>/gi, (_, t) => toScript(t.replace(/<[^>]+>/g, ""), SUB))
 		.replace(/<br\s*\/?>/gi, "\n")
 		.replace(/<\/(p|div|jats:p|jats:sec|sec)>/gi, "\n\n");
 	const doc = parseHtml("<body>" + s + "</body>");
@@ -332,6 +352,7 @@ class Resolver {
 		const doc = parseXml(xml);
 		const art = doc.querySelector("PubmedArticle");
 		if (!art) throw new Error(`PMID ${pmid} not found on PubMed`);
+		scriptifyTree(art);
 		const txt = (sel, root = art) => clean(root.querySelector(sel) && root.querySelector(sel).textContent);
 		const all = (sel, root = art) => Array.from(root.querySelectorAll(sel));
 
@@ -1207,4 +1228,4 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 module.exports = ScientificArticleCardPlugin;
 module.exports.default = ScientificArticleCardPlugin;
 // exposed for testing
-module.exports._internals = { parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };
+module.exports._internals = { toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };
