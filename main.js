@@ -15,10 +15,11 @@ const {
 	Setting,
 	Notice,
 	Modal,
-	MarkdownView,
 	requestUrl,
 	parseYaml,
+	editorInfoField,
 } = obsidian;
+const { EditorView } = require("@codemirror/view");
 
 const CODE_BLOCK_LANG = "paper";
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
@@ -911,12 +912,6 @@ class ScientificArticleCardPlugin extends Plugin {
 		this.registerMarkdownCodeBlockProcessor(CODE_BLOCK_LANG, (source, el) => renderCard(source, el, this.settings));
 
 		this.addCommand({
-			id: "paste-as-scientific-article-card",
-			name: "Paste identifier / URL as article card",
-			icon: "clipboard-paste",
-			editorCallback: (editor) => this.pasteAsCard(editor),
-		});
-		this.addCommand({
 			id: "convert-selection-to-scientific-article-card",
 			name: "Convert selection (or identifier under cursor) to article card",
 			icon: "book-open",
@@ -929,16 +924,20 @@ class ScientificArticleCardPlugin extends Plugin {
 			editorCallback: (editor) => new IdentifierModal(this.app, (v) => this.convertTokens(editor, v, null)).open(),
 		});
 
-		// Capture-phase listener so we run before CodeMirror / other "editor-paste" handlers
-		// (e.g. Auto Card Link) and only claim scholarly identifiers.
-		this.registerDomEvent(document, "paste", (evt) => this.onPaste(evt), true);
+		// Paste detection reads nothing but the note itself: "editor-paste" only marks that a paste
+		// is happening, and the pasted text is picked up from the document once Obsidian has inserted it.
+		this.pendingPaste = null;
+		this.registerEvent(
+			this.app.workspace.on("editor-paste", (evt, editor) => {
+				// already handled by another plugin (e.g. Auto Card Link)
+				this.pendingPaste = evt.defaultPrevented ? null : { editor, at: Date.now() };
+			})
+		);
+		this.registerEditorExtension(EditorView.updateListener.of((update) => this.onEditorUpdate(update)));
 
 		this.registerEvent(
 			this.app.workspace.on("editor-menu", (menu, editor) => {
 				if (!this.settings.showInMenu) return;
-				menu.addItem((item) =>
-					item.setTitle("Paste as article card").setIcon("book-open").onClick(() => this.pasteAsCard(editor))
-				);
 				menu.addItem((item) =>
 					item.setTitle("Convert to article card").setIcon("book-open").onClick(() => this.convertSelection(editor))
 				);
@@ -963,39 +962,53 @@ class ScientificArticleCardPlugin extends Plugin {
 		return parseIdentifier(text, { allowBare, domains: this.domains() });
 	}
 
-	onPaste(evt) {
-		if (!this.settings.enhancePaste || evt.defaultPrevented) return;
-		const target = evt.target;
-		if (!(target instanceof HTMLElement) || !target.closest(".cm-editor")) return;
-		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if (!view || !view.editor || !view.containerEl.contains(target)) return;
-		const cd = evt.clipboardData;
-		if (!cd || cd.files.length > 0) return;
-		const text = (cd.getData("text/plain") || "").trim();
-		if (!text || /\n/.test(text)) return;
+	onEditorUpdate(update) {
+		if (!this.settings.enhancePaste || !update.docChanged) return;
+		const info = update.state.field(editorInfoField, false);
+		const editor = info && info.editor;
+		if (!editor) return;
+		const pending = this.pendingPaste;
+		const signalled =
+			!!pending && Date.now() - pending.at < 1000 && (pending.editor === editor || pending.editor.cm === update.view);
+		const txs = update.transactions;
+		for (let i = 0; i < txs.length; i++) {
+			const tr = txs[i];
+			if (!tr.docChanged || !(signalled || tr.isUserEvent("input.paste"))) continue;
+			let hit = null;
+			tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
+				// only a paste at the cursor: pasting a URL over a selection makes a [selection](url) link
+				if (!hit && fromA === toA) hit = { from: fromB, to: toB, text: inserted.toString() };
+			});
+			if (!hit) continue;
+			for (const later of txs.slice(i + 1)) {
+				hit.from = later.changes.mapPos(hit.from, 1);
+				hit.to = later.changes.mapPos(hit.to, -1);
+			}
+			this.pendingPaste = null;
+			this.onPastedText(editor, hit);
+			return;
+		}
+	}
+
+	onPastedText(editor, hit) {
+		const text = hit.text.trim();
+		// ignore multi-line pastes and Auto Card Link's own "[Fetching Data#…](url)" placeholder
+		if (!text || /\n/.test(text) || /^\[Fetching Data#/.test(text)) return;
 		const ident = this.parse(text, this.settings.pasteBarePmid);
 		if (!ident || (ident.type === "url" && !ident.scholarly)) return;
 		if (!navigator.onLine) return;
-		evt.preventDefault();
-		evt.stopImmediatePropagation();
-		this.convertIdentifiers(view.editor, [ident], null);
-	}
-
-	async pasteAsCard(editor) {
-		let text = "";
-		try {
-			text = (await navigator.clipboard.readText()).trim();
-		} catch (e) {
-			new Notice("Scientific Article Card: could not read the clipboard");
-			return;
-		}
-		if (!text) return;
-		this.convertTokens(editor, text, null, true);
+		// the editor can't be changed from inside an update listener
+		window.setTimeout(() => {
+			const from = editor.offsetToPos(hit.from);
+			const to = editor.offsetToPos(hit.to);
+			if (editor.getRange(from, to) !== hit.text) return; // note changed in the meantime
+			this.convertIdentifiers(editor, [ident], { from, to });
+		}, 0);
 	}
 
 	convertSelection(editor) {
 		if (editor.somethingSelected()) {
-			this.convertTokens(editor, editor.getSelection(), { from: editor.getCursor("from"), to: editor.getCursor("to") }, false);
+			this.convertTokens(editor, editor.getSelection(), { from: editor.getCursor("from"), to: editor.getCursor("to") });
 			return;
 		}
 		// token under cursor
@@ -1010,11 +1023,11 @@ class ScientificArticleCardPlugin extends Plugin {
 			new Notice("Scientific Article Card: select or place the cursor on a PMID, DOI or URL");
 			return;
 		}
-		this.convertTokens(editor, token, { from: { line: cur.line, ch: a }, to: { line: cur.line, ch: b } }, false);
+		this.convertTokens(editor, token, { from: { line: cur.line, ch: a }, to: { line: cur.line, ch: b } });
 	}
 
 	/** text → identifiers → cards. `range` is replaced; null = insert at cursor/selection. */
-	convertTokens(editor, text, range, pasteFallback) {
+	convertTokens(editor, text, range) {
 		const tokens = String(text)
 			.split(/[\s,;]+/)
 			.map((t) => t.trim())
@@ -1024,8 +1037,7 @@ class ScientificArticleCardPlugin extends Plugin {
 		const candidates = mdLinks && mdLinks.length ? mdLinks.concat(tokens.filter((t) => !/[\[\]()]/.test(t))) : tokens;
 		const idents = candidates.map((t) => this.parse(t, true)).filter(Boolean);
 		if (!idents.length) {
-			if (pasteFallback) editor.replaceSelection(text);
-			else new Notice("Scientific Article Card: no PMID, PMCID, DOI, arXiv ID or URL found");
+			new Notice("Scientific Article Card: no PMID, PMCID, DOI, arXiv ID or URL found");
 			return;
 		}
 		this.convertIdentifiers(editor, idents, range);
@@ -1189,7 +1201,7 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 		toggle("Expand abstract by default", "For the card view.", "abstractOpen");
 
 		new Setting(containerEl).setName("Paste").setHeading();
-		toggle("Enhance default paste", "Pasting a PubMed/PMC/DOI/arXiv link, a DOI, “PMID: …” or a URL from the domains below creates a article card. Other URLs are left alone (e.g. for Auto Card Link).", "enhancePaste");
+		toggle("Enhance default paste", "Pasting a PubMed/PMC/DOI/arXiv link, a DOI, “PMID: …” or a URL from the domains below turns into an article card once it lands in the note. Other URLs are left alone.", "enhancePaste");
 		toggle("Treat pasted bare numbers as PMIDs", "Pasting just “34265844” creates a card. Off by default to avoid surprises.", "pasteBarePmid");
 		new Setting(containerEl)
 			.setName("Publisher domains")
@@ -1201,7 +1213,7 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 				});
 				t.inputEl.rows = 6;
 			});
-		toggle("Show in context menu", "Add “Paste as article card” and “Convert to article card” to the editor right-click menu.", "showInMenu");
+		toggle("Show in context menu", "Add “Convert to article card” to the editor right-click menu.", "showInMenu");
 
 		new Setting(containerEl).setName("APIs").setHeading();
 		new Setting(containerEl)

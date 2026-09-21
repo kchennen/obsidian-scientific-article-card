@@ -61,12 +61,11 @@ Markdown links (`[text](url)`) and `<url>` are accepted too. Trailing `/full`, `
   <img alt="Pasting PMID: 34265844 inserts a fetching placeholder, which is replaced by the article card; the abstract then expands" src="./images/card-paste-light.gif">
 </picture>
 
-- 📋 **Paste**: with *Enhance default paste* on, pasting a PubMed/PMC/DOI/arXiv link, a DOI, `PMID: …`, or a URL from a listed publisher domain creates a card. Other URLs are left untouched (so it coexists with Auto Card Link).
+- 📋 **Paste**: with *Enhance default paste* on, pasting a PubMed/PMC/DOI/arXiv link, a DOI, `PMID: …`, or a URL from a listed publisher domain turns it into a card once it lands in your note. Other URLs are left untouched.
 - ⌨️ **Commands**
-  - *Paste identifier / URL as article card*
   - *Convert selection (or identifier under cursor) to article card* — accepts several identifiers separated by spaces, commas or new lines
   - *Insert article card from PMID / DOI / URL…* — opens a prompt
-- 🖱️ **Editor context menu**: *Paste as article card*, *Convert to article card*.
+- 🖱️ **Editor context menu**: *Convert to article card*.
 
 ## 🎨 Output formats
 
@@ -94,14 +93,13 @@ This plugin makes network requests **only when you convert an identifier** into 
 
 If you enter a contact email or NCBI API key in the settings, they are sent to NCBI (and the email to Crossref) as recommended by their usage policies. No other data is collected or transmitted, and there is no telemetry.
 
-## 📋 Clipboard use
+## 📋 Clipboard
 
-The plugin only **reads** the clipboard, and only when you ask it to. It never writes to the clipboard and never reads it in the background.
+The plugin **does not access the system clipboard**: it never reads or writes it.
 
-- **When you paste** (with *Enhance default paste* on): it checks the text you are pasting. If it is a PMID, PMCID, DOI, arXiv ID or a supported article URL, the paste becomes a card. Anything else is pasted normally and untouched. Turn *Enhance default paste* off to disable this.
-- **When you run *Paste identifier / URL as article card*** (command palette or right-click menu): it reads the clipboard text once, to convert it.
+Paste-to-card works on your note, not the clipboard. When you paste, Obsidian inserts the text as usual; the plugin then looks at that newly inserted text and, if it is a PMID, PMCID, DOI, arXiv ID or supported article URL, replaces it with a card (⌘Z brings back what you pasted). Turn *Enhance default paste* off to disable this.
 
-The clipboard content is never stored or logged. Only a recognized identifier is sent to the services listed under [Network use](#-network-use).
+> **Using Auto Card Link too?** If its *Enhance Default Paste* option is on, it takes over pasted **URLs** before they reach the note, so PubMed/DOI links become generic link cards. Turn that option off, or paste the bare DOI / `PMID: …`, or use *Convert selection to article card* on the link.
 
 ## 🔐 Verifying releases
 
