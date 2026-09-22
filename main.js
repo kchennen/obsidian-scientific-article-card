@@ -1036,6 +1036,84 @@ function fmToCard(fm, settings) {
 	};
 }
 
+/** Properties refreshed from the article's databases (never status, rating, tags, created or others). */
+const FETCHED_PROPS = ["title", "authors", "journal", "year", "volume", "issue", "pages", "doi", "pmid", "pmcid", "arxiv", "url", "image", "publication-type", "keywords"];
+
+/** Apply fetched properties to a frontmatter object. Empty new values keep the old one. Returns changed keys. */
+function refreshProps(fm, fresh) {
+	const changed = [];
+	for (const k of FETCHED_PROPS) {
+		if (!(k in fresh)) continue;
+		const v = fresh[k];
+		if (JSON.stringify(fm[k]) === JSON.stringify(v)) continue;
+		fm[k] = v;
+		changed.push(k);
+	}
+	return changed;
+}
+
+/** Contents of a Papers.base listing the paper notes in `folder` ("/" = whole vault). */
+function papersBase(folder) {
+	const q = (x) => JSON.stringify(x);
+	const filters = ['    - type == "paper"'];
+	if (folder && folder !== "/") filters.push(`    - file.inFolder(${q(folder)})`);
+	const columns = ["file.name", "note.title", "note.year", "note.journal", "note.status", "note.rating", "note.tags"];
+	const order = columns.map((c) => `      - ${c}`).join("\n");
+	return `filters:
+  and:
+${filters.join("\n")}
+properties:
+  note.title:
+    displayName: Title
+  note.year:
+    displayName: Year
+  note.journal:
+    displayName: Journal
+  note.status:
+    displayName: Status
+  note.rating:
+    displayName: Rating
+  note.tags:
+    displayName: Tags
+views:
+  - type: table
+    name: All papers
+    order:
+${order}
+    sort:
+      - property: note.year
+        direction: DESC
+  - type: table
+    name: To read
+    filters:
+      and:
+        - status == "to-read"
+    order:
+${order}
+    sort:
+      - property: note.created
+        direction: ASC
+  - type: table
+    name: By status
+    groupBy:
+      property: note.status
+      direction: ASC
+    order:
+${order}
+  - type: cards
+    name: Shelf
+    image: note.image
+    imageFit: contain
+    imageAspectRatio: 0.7
+    cardSize: 240
+    order:
+      - note.title
+      - note.year
+      - note.journal
+      - note.status
+`;
+}
+
 /** Link path from "[[Note]]", "[[Note|alias]]", "[Note](Note.md)" or a bare path. */
 function linkpathFrom(v) {
 	const s = String(v || "").trim();
@@ -1339,6 +1417,27 @@ class ScientificArticleCardPlugin extends Plugin {
 				}).open(),
 		});
 		this.addCommand({
+			id: "refresh-paper-metadata",
+			name: "Refresh paper metadata",
+			icon: "refresh-cw",
+			checkCallback: (checking) => {
+				const file = this.app.workspace.getActiveFile();
+				const fm = file && (this.app.metadataCache.getFileCache(file) || {}).frontmatter;
+				if (!fm || fm.type !== "paper") return false;
+				if (!checking) this.refreshPaperNote(file);
+				return true;
+			},
+		});
+		this.addCommand({
+			id: "create-papers-base",
+			name: "Create Papers base (overview of paper notes)",
+			icon: "table",
+			callback: () => {
+				const active = this.app.workspace.getActiveFile();
+				this.createPapersBase(active ? active.path : "");
+			},
+		});
+		this.addCommand({
 			id: "insert-scientific-article-card",
 			name: "Insert article card from PMID / DOI / URL…",
 			icon: "file-plus",
@@ -1437,7 +1536,12 @@ class ScientificArticleCardPlugin extends Plugin {
 			target.createDiv({ cls: "scientific-article-card-error", text: "Scientific Article Card: this note has no paper properties (title, url…) yet." });
 			return ctx.sourcePath;
 		}
-		this.track(renderCardData(fmToCard(fm, this.settings), target, this.settings, { onEdit: () => this.editProperties(file, fm.title) }));
+		this.track(
+			renderCardData(fmToCard(fm, this.settings), target, this.settings, {
+				note: { label: "Refresh metadata", icon: "refresh-cw", onClick: () => this.refreshPaperNote(file) },
+				onEdit: () => this.editProperties(file, fm.title),
+			})
+		);
 		return ctx.sourcePath;
 	}
 
@@ -1537,6 +1641,41 @@ class ScientificArticleCardPlugin extends Plugin {
 			);
 			if (!ok) new Notice(`Scientific Article Card: created ${file.basename}, but couldn't link the card to it.`);
 		}
+		await this.app.workspace.getLeaf("tab").openFile(file);
+	}
+
+	/** Fetch the article again and update the note's fetched properties only. */
+	async refreshPaperNote(file) {
+		const fm = (this.app.metadataCache.getFileCache(file) || {}).frontmatter || {};
+		const ident = identFromCard(fm);
+		if (!ident) return new Notice("Scientific Article Card: this note has no PMID, DOI, arXiv ID or URL to refresh from.");
+		new Notice(`Scientific Article Card: refreshing ${file.basename}…`);
+		let paper;
+		try {
+			paper = await new Resolver(this.settings).resolve(ident);
+		} catch (e) {
+			return new Notice(`Scientific Article Card: couldn't refresh ${file.basename} — ${e.message || e}`, 8000);
+		}
+		const fresh = paperProps(paper, {}, this.settings);
+		let changed = [];
+		await this.app.fileManager.processFrontMatter(file, (f) => {
+			changed = refreshProps(f, fresh);
+		});
+		new Notice(
+			changed.length
+				? `Scientific Article Card: ${file.basename} updated (${changed.join(", ")}).`
+				: `Scientific Article Card: ${file.basename} is up to date.`
+		);
+	}
+
+	/** Create (or open) Papers.base in the papers folder. */
+	async createPapersBase(sourcePath) {
+		const folder = this.paperFolder(sourcePath);
+		await this.ensureFolder(folder);
+		const path = normalizePath((folder === "/" ? "" : folder + "/") + "Papers.base");
+		let file = this.app.vault.getAbstractFileByPath(path);
+		if (!(file instanceof TFile)) file = await this.app.vault.create(path, papersBase(folder));
+		else new Notice("Scientific Article Card: opening the existing Papers base.");
 		await this.app.workspace.getLeaf("tab").openFile(file);
 	}
 
@@ -1983,4 +2122,4 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 module.exports = ScientificArticleCardPlugin;
 module.exports.default = ScientificArticleCardPlugin;
 // exposed for testing
-module.exports._internals = { parseTags, setFields, setUserFields, findBlock, renderCard, renderCardData, paperNoteBaseName, paperProps, paperNoteBody, fmToCard, cardToPaper, identFromCard, linkpathFrom, colorClasses, toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };
+module.exports._internals = { refreshProps, papersBase, FETCHED_PROPS, parseTags, setFields, setUserFields, findBlock, renderCard, renderCardData, paperNoteBaseName, paperProps, paperNoteBody, fmToCard, cardToPaper, identFromCard, linkpathFrom, colorClasses, toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };

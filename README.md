@@ -66,6 +66,8 @@ Markdown links (`[text](url)`) and `<url>` are accepted too. Trailing `/full`, `
   - *Convert selection (or identifier under cursor) to article card* — accepts several identifiers separated by spaces, commas or new lines
   - *Insert article card from PMID / DOI / URL…* — opens a prompt
   - *Create paper note from PMID / DOI / URL…* — see [Paper notes](#-paper-notes)
+  - *Refresh paper metadata* — in a paper note
+  - *Create Papers base (overview of paper notes)*
 - 🖱️ **Editor context menu**: *Convert to article card*.
 
 ## 🎨 Output formats
@@ -107,6 +109,19 @@ For papers you work with, create **one note per paper** with the 📄 button in 
 - **Content**: the properties (`type: paper`, `title`, `authors`, `journal`, `year`, `doi`, `pmid`, `pmcid`, `url`, `image`, `publication-type`, `keywords`, `status`, `rating`, `tags`, `created`), a card drawn from them (a `paper-note` code block), the abstract, and a *Notes* section.
 - **Your notes move with it**: the card's status, rating and tags become the note's properties, and its note goes into *Notes*.
 - **Reading lists keep their cards**: the card gets a `paper-note` link, its 📄 button becomes *Open note*, and its *Your notes* section shows the paper note's status, rating and tags. The ✏️ button edits the paper note's properties.
+
+**Refresh paper metadata**: in a paper note, use the 🔄 button on its card or the *Refresh paper metadata* command to fetch the paper again (for example after a preprint is published, or when a figure becomes available). It updates only the fetched properties — title, authors, journal, year, volume, issue, pages, identifiers, URL, image, publication type and keywords — and never your `status`, `rating`, `tags`, `created`, other properties or the note's text. An empty result keeps the old value.
+
+**Papers base**: the *Create Papers base* command creates `Papers.base` in the papers folder (or opens it if it exists), listing the paper notes in that folder with four views:
+
+| View | Shows |
+| --- | --- |
+| All papers | table of title, year, journal, status, rating and tags, newest first |
+| To read | papers with `status: to-read`, oldest first |
+| By status | the table grouped by status |
+| Shelf | cards with each paper's figure as the cover |
+
+It's a regular Bases file, so you can change its filters, columns and views in Obsidian.
 
 Example properties:
 
