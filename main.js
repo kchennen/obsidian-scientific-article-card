@@ -712,7 +712,8 @@ class Resolver {
 		if (/^review-article$/i.test(p.type)) p.type = "Review";
 
 		let kw = s.includeKeywords ? p.keywords || [] : [];
-		if (s.includeMesh) kw = kw.concat(p.mesh || []);
+		// MeSH terms: always with "Include MeSH terms", otherwise when there are no author keywords
+		if (s.includeMesh || (s.includeKeywords && !kw.length)) kw = kw.concat(p.mesh || []);
 		p.keywordList = uniq(kw.map(clean)).slice(0, 15);
 		return p;
 	}
@@ -1230,8 +1231,8 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 				);
 
 		toggle("Include abstract", "", "includeAbstract");
-		toggle("Include keywords", "Author keywords (PubMed / Europe PMC / Crossref subjects).", "includeKeywords");
-		toggle("Include MeSH terms", "Add MeSH descriptors to the keywords.", "includeMesh");
+		toggle("Include keywords", "Author keywords (PubMed / Europe PMC / Crossref subjects). When an article has none, its MeSH terms are shown instead.", "includeKeywords");
+		toggle("Include MeSH terms", "Always add MeSH terms, even when the article has author keywords.", "includeMesh");
 		toggle("Fetch preview image", "Load the publisher page to grab its og:image. Some publishers block this; it is skipped silently.", "fetchImage");
 		toggle("Expand abstract by default", "For the card view.", "abstractOpen");
 
