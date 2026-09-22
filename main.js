@@ -20,10 +20,14 @@ const {
 	editorInfoField,
 	setIcon,
 	TFile,
+	MarkdownRenderChild,
+	normalizePath,
 } = obsidian;
 const { EditorView } = require("@codemirror/view");
 
 const CODE_BLOCK_LANG = "paper";
+const PAPER_NOTE_LANG = "paper-note";
+const COLORS = ["blue", "cyan", "teal", "green", "lime", "yellow", "orange", "red", "pink", "grape", "violet", "indigo", "gray", "accent"];
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const EUROPEPMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search";
 const PUBMED_IMAGE = "https://cdn.ncbi.nlm.nih.gov/pubmed/persistent/pubmed-meta-image-v2.jpg";
@@ -62,6 +66,13 @@ const DEFAULT_SETTINGS = {
 	authorFormat: "short", // "short" (Smith JA) | "full" (John A. Smith)
 	abstractOpen: false,
 	syncTags: true,
+	paperNoteLocation: "project", // "project" (next to the note with the card) | "folder"
+	paperNoteSubfolder: "",
+	paperNoteFolder: "",
+	cardStyle: "mantine", // "mantine" | "obsidian"
+	typeColor: "blue",
+	keywordColor: "violet",
+	tagColor: "teal",
 	showInMenu: true,
 	email: "",
 	ncbiApiKey: "",
@@ -727,6 +738,7 @@ class Resolver {
 /* ------------------------------------------------------------------ */
 
 function formatAuthor(a, style) {
+	if (a.formatted) return a.formatted;
 	if (a.collective && !a.last) return a.collective;
 	if (style === "full") return clean(`${a.first} ${a.last}`);
 	return clean(`${a.last} ${a.initials || (a.first || "").split(/\s+/).map((x) => x[0] || "").join("")}`);
@@ -851,22 +863,32 @@ function parseTags(v) {
 	return uniq(list.map(normalizeTag).filter((t) => t && /\D/.test(t)));
 }
 
-/** Replace the user fields in a card's YAML lines, keeping everything else untouched. */
-function setUserFields(lines, v) {
+/** Replace `fields` in a card's YAML lines (null/empty removes), keeping everything else untouched. */
+function setFields(lines, fields) {
+	const keys = Object.keys(fields);
 	const out = [];
 	let skipping = false;
 	for (const l of lines) {
 		const m = l.match(/^([A-Za-z_][\w-]*)\s*:/);
-		if (m) skipping = USER_KEYS.includes(m[1]);
+		if (m) skipping = keys.includes(m[1]);
 		else if (!/^[\s-]/.test(l)) skipping = false;
 		if (!skipping) out.push(l);
 	}
 	while (out.length && !out[out.length - 1].trim()) out.pop();
-	if (v.status) out.push(`status: ${JSON.stringify(v.status)}`);
-	if (v.rating) out.push(`rating: ${v.rating}`);
-	if (v.tags && v.tags.length) out.push(`tags: ${JSON.stringify(v.tags)}`);
-	if (v.note && v.note.trim()) out.push(`note: ${JSON.stringify(v.note.trim())}`);
+	for (const [k, v] of Object.entries(fields)) {
+		if (v == null || v === "" || v === 0 || (Array.isArray(v) && !v.length)) continue;
+		out.push(`${k}: ${typeof v === "number" ? v : JSON.stringify(v)}`);
+	}
 	return out;
+}
+
+function setUserFields(lines, v) {
+	return setFields(lines, {
+		status: v.status || null,
+		rating: v.rating || null,
+		tags: v.tags && v.tags.length ? v.tags : null,
+		note: v.note && v.note.trim() ? v.note.trim() : null,
+	});
 }
 
 /** Find the ```paper block whose content is `source`, closest to `hintLine`. Returns [start, end] line indexes. */
@@ -885,22 +907,192 @@ function findBlock(lines, source, hintLine) {
 	return best;
 }
 
-function renderCard(source, el, settings, onEdit) {
+/* ------------------------------------------------------------------ */
+/* Paper notes (one note per article, metadata in properties)          */
+/* ------------------------------------------------------------------ */
+
+function asList(v) {
+	if (v == null || v === "") return [];
+	return Array.isArray(v) ? v.map(String) : [String(v)];
+}
+
+/** Identifier to (re)fetch a card's article. */
+function identFromCard(d) {
+	if (d.pmid) return { type: "pmid", id: String(d.pmid), raw: String(d.pmid) };
+	if (d.doi) return { type: "doi", id: cleanDoi(d.doi), raw: String(d.doi) };
+	if (d.arxiv) return { type: "arxiv", id: String(d.arxiv), raw: String(d.arxiv) };
+	if (d.pmcid) return { type: "pmcid", id: String(d.pmcid), raw: String(d.pmcid) };
+	if (d.url) return parseIdentifier(String(d.url), {});
+	return null;
+}
+
+/** Paper-like object from a card, used when the article can't be fetched again. */
+function cardToPaper(d) {
+	const names = String(d.authors || "")
+		.split(/,\s*/)
+		.map((n) => n.trim())
+		.filter((n) => n && !/^et al\.?$/i.test(n));
+	return {
+		title: d.title || "",
+		authors: names.map((n) => ({ formatted: n, last: n.split(/\s+/)[0] })),
+		journal: d.journal || "",
+		journalAbbr: "",
+		year: d.year ? String(d.year) : "",
+		volume: d.volume || "",
+		issue: d.issue || "",
+		pages: d.pages || "",
+		doi: d.doi || "",
+		pmid: d.pmid ? String(d.pmid) : "",
+		pmcid: d.pmcid || "",
+		arxiv: d.arxiv || "",
+		url: d.url || "",
+		image: d.image || "",
+		type: d.type || "",
+		keywordList: String(d.keywords || "")
+			.split(/\s*;\s*/)
+			.filter(Boolean),
+		abstract: d.abstract || "",
+	};
+}
+
+/** FirstAuthor_JournalAbbrev_Year, e.g. Jumper_Nature_2021, Zucca_HumGenet_2025. */
+function paperNoteBaseName(p) {
+	const clean = (x) => String(x || "").normalize("NFC").replace(/[^\p{L}\p{N}]/gu, "");
+	const a = p.authors && p.authors[0];
+	const first = clean(a ? a.last || String(a.collective || a.formatted || "").split(/\s+/)[0] : "");
+	let journal = p.journalAbbr || "";
+	if (!journal && p.journal) {
+		const words = p.journal.split(/\s+/);
+		journal = words.length <= 2 ? p.journal : words.filter((w) => /^\p{Lu}/u.test(w)).map((w) => w[0]).join("");
+	}
+	return [first, clean(journal).slice(0, 20), p.year].filter(Boolean).join("_") || "Paper";
+}
+
+/** Properties of a new paper note. */
+function paperProps(p, user, settings) {
+	const props = {
+		type: "paper",
+		title: p.title,
+		authors: (p.authors || []).map((a) => formatAuthor(a, settings.authorFormat)).filter(Boolean),
+		journal: p.journal,
+		year: /^\d{4}$/.test(String(p.year)) ? Number(p.year) : p.year,
+		volume: p.volume,
+		issue: p.issue,
+		pages: p.pages,
+		doi: p.doi,
+		pmid: p.pmid ? String(p.pmid) : "",
+		pmcid: p.pmcid,
+		arxiv: p.arxiv,
+		url: p.url,
+		image: p.image,
+		"publication-type": p.type,
+		keywords: p.keywordList || [],
+		status: user.status,
+		rating: user.rating,
+		tags: user.tags || [],
+		created: new Date().toISOString().slice(0, 10),
+	};
+	for (const k of Object.keys(props)) {
+		const v = props[k];
+		if (v == null || v === "" || v === 0 || (Array.isArray(v) && !v.length)) delete props[k];
+	}
+	return props;
+}
+
+function paperNoteBody(abstract, note) {
+	let body = "```" + PAPER_NOTE_LANG + "\n```\n";
+	if (abstract) body += "\n## Abstract\n\n" + abstract + "\n";
+	body += "\n## Notes\n\n" + (note ? note.trim() + "\n" : "");
+	return body;
+}
+
+/** Card data from a paper note's properties. */
+function fmToCard(fm, settings) {
+	const names = asList(fm.authors);
+	const max = Number(settings.maxAuthors) || 0;
+	const authors = max > 0 && names.length > max ? names.slice(0, max).join(", ") + ", et al." : names.join(", ");
+	const host = hostOf(fm.url || "");
+	return {
+		url: fm.url,
+		title: fm.title,
+		authors,
+		journal: fm.journal,
+		year: fm.year,
+		volume: fm.volume,
+		issue: fm.issue,
+		pages: fm.pages,
+		doi: fm.doi,
+		pmid: fm.pmid,
+		pmcid: fm.pmcid,
+		arxiv: fm.arxiv,
+		type: fm["publication-type"],
+		host,
+		favicon: host ? `https://www.google.com/s2/favicons?domain=${host}&sz=64` : "",
+		image: fm.image,
+		keywords: asList(fm.keywords).join("; "),
+		status: fm.status,
+		rating: fm.rating,
+		tags: fm.tags,
+	};
+}
+
+/** Link path from "[[Note]]", "[[Note|alias]]", "[Note](Note.md)" or a bare path. */
+function linkpathFrom(v) {
+	const s = String(v || "").trim();
+	let m;
+	if ((m = s.match(/^!?\[\[([^\]|#]+)/))) return m[1].trim();
+	if ((m = s.match(/^\[[^\]]*\]\(<?([^)>]+)>?\)$/))) return safeDecode(m[1]).replace(/\.md$/, "");
+	return s.replace(/\.md$/, "");
+}
+
+function colorClasses(settings) {
+	const pick = (c, dflt) => (COLORS.includes(c) ? c : dflt);
+	return [
+		`sac-surface-${settings.cardStyle === "obsidian" ? "obsidian" : "mantine"}`,
+		`sac-type-${pick(settings.typeColor, "blue")}`,
+		`sac-kw-${pick(settings.keywordColor, "violet")}`,
+		`sac-tag-${pick(settings.tagColor, "teal")}`,
+	];
+}
+
+function applyColorClasses(card, settings) {
+	for (const c of Array.from(card.classList)) if (c.startsWith("sac-")) card.classList.remove(c);
+	card.classList.add(...colorClasses(settings));
+}
+
+function renderCard(source, el, settings, actions) {
 	let d;
 	try {
 		d = parseYaml(source) || {};
 	} catch (e) {
 		el.createDiv({ cls: "scientific-article-card-error", text: `Scientific Article Card: invalid YAML — ${e.message}` });
-		return;
+		return null;
 	}
-	const userTags = parseTags(d.tags);
-	for (const k of Object.keys(d)) d[k] = d[k] == null ? "" : String(d[k]);
+	return renderCardData(d, el, settings, typeof actions === "function" ? { onEdit: actions } : actions || {});
+}
+
+/**
+ * actions: { onEdit(), note: { label, icon, onClick() }, user: { status, rating, tags, note } }
+ * `user` overrides the card's own notes fields (used when the card is linked to a paper note).
+ */
+function renderCardData(data, el, settings, actions) {
+	const a = actions || {};
+	const src = a.user || data;
+	const userTags = parseTags(src.tags);
+	const u = {
+		status: src.status == null ? "" : String(src.status),
+		rating: Math.max(0, Math.min(5, parseInt(src.rating, 10) || 0)),
+		note: src.note == null ? "" : String(src.note),
+	};
+	const d = {};
+	for (const k of Object.keys(data || {})) d[k] = data[k] == null ? "" : Array.isArray(data[k]) ? data[k].join(", ") : String(data[k]);
 	if (!d.title && !d.url) {
 		el.createDiv({ cls: "scientific-article-card-error", text: "Scientific Article Card: a `title` or `url` is required." });
-		return;
+		return null;
 	}
 
 	const card = el.createDiv({ cls: "scientific-article-card" });
+	card.classList.add(...colorClasses(settings));
 	const main = card.createDiv({ cls: "scientific-article-card-main" });
 	const body = main.createDiv({ cls: "scientific-article-card-body" });
 
@@ -911,19 +1103,23 @@ function renderCard(source, el, settings, onEdit) {
 	}
 	if (d.host) header.createSpan({ cls: "scientific-article-card-host", text: d.host });
 	if (d.type) header.createSpan({ cls: "scientific-article-card-badge", text: d.type });
-	if (onEdit) {
-		const btn = header.createEl("button", {
+	const acts = header.createSpan({ cls: "scientific-article-card-actions" });
+	const action = (label, icon, fn) => {
+		const btn = acts.createEl("button", {
 			cls: "scientific-article-card-edit clickable-icon",
-			attr: { type: "button", "aria-label": "Edit notes" },
+			attr: { type: "button", "aria-label": label, title: label },
 		});
-		if (setIcon) setIcon(btn, "pencil");
-		else btn.setText("Edit");
+		if (setIcon) setIcon(btn, icon);
+		else btn.setText(label);
 		btn.addEventListener("click", (evt) => {
 			evt.preventDefault();
 			evt.stopPropagation();
-			onEdit();
+			fn();
 		});
-	}
+	};
+	if (a.note) action(a.note.label, a.note.icon, a.note.onClick);
+	if (a.onEdit) action("Edit notes", "pencil", a.onEdit);
+	if (!acts.childElementCount) acts.remove();
 
 	if (d.url) externalLink(body, d.title || d.url, d.url, "scientific-article-card-title");
 	else body.createDiv({ cls: "scientific-article-card-title", text: d.title });
@@ -958,14 +1154,14 @@ function renderCard(source, el, settings, onEdit) {
 		for (const k of d.keywords.split(/\s*;\s*/).filter(Boolean)) kw.createSpan({ cls: "scientific-article-card-keyword", text: k });
 	}
 
-	const rating = Math.max(0, Math.min(5, parseInt(d.rating, 10) || 0));
-	if (d.status || rating || userTags.length || d.note) {
+	const rating = u.rating;
+	if (u.status || rating || userTags.length || u.note) {
 		const mine = card.createDiv({ cls: "scientific-article-card-mine" });
 		const row = mine.createDiv({ cls: "scientific-article-card-mine-row" });
 		row.createSpan({ cls: "scientific-article-card-mine-label", text: "Your notes" });
-		if (d.status) {
-			const known = STATUSES[d.status] ? ` is-${d.status}` : "";
-			row.createSpan({ cls: "scientific-article-card-status" + known, text: STATUSES[d.status] || d.status });
+		if (u.status) {
+			const known = STATUSES[u.status] ? ` is-${u.status}` : "";
+			row.createSpan({ cls: "scientific-article-card-status" + known, text: STATUSES[u.status] || u.status });
 		}
 		if (rating) {
 			row.createSpan({
@@ -975,9 +1171,9 @@ function renderCard(source, el, settings, onEdit) {
 			});
 		}
 		for (const t of userTags) row.createSpan({ cls: "scientific-article-card-tag", text: "#" + t });
-		if (d.note) {
+		if (u.note) {
 			const note = mine.createDiv({ cls: "scientific-article-card-note" });
-			for (const para of d.note.split(/\n{2,}/)) note.createEl("p", { text: para });
+			for (const para of u.note.split(/\n{2,}/)) note.createEl("p", { text: para });
 		}
 	}
 
@@ -994,6 +1190,7 @@ function renderCard(source, el, settings, onEdit) {
 			} else pEl.setText(para);
 		}
 	}
+	return card;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1033,11 +1230,12 @@ class IdentifierModal extends Modal {
 }
 
 class NotesModal extends Modal {
-	constructor(app, title, values, onSubmit) {
+	constructor(app, title, values, onSubmit, options) {
 		super(app);
 		this.paperTitle = title;
 		this.values = values;
 		this.onSubmit = onSubmit;
+		this.options = Object.assign({ showNote: true, hint: "" }, options);
 	}
 	onOpen() {
 		const { contentEl } = this;
@@ -1058,26 +1256,51 @@ class NotesModal extends Modal {
 			.setName("Tags")
 			.setDesc("Separated by commas or spaces, without #.")
 			.addText((t) => t.setPlaceholder("impatient2, methods").setValue(v.tags.join(", ")).onChange((x) => (v.tags = parseTags(x))));
-		contentEl.createEl("div", { cls: "setting-item-name", text: "Note" });
-		const note = contentEl.createEl("textarea", { cls: "scientific-article-card-note-input", attr: { rows: 6 } });
-		note.value = v.note || "";
-		note.addEventListener("input", () => (v.note = note.value));
 		const submit = () => {
 			this.close();
 			this.onSubmit(v);
 		};
-		note.addEventListener("keydown", (e) => {
-			if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-				e.preventDefault();
-				submit();
-			}
-		});
+		if (this.options.showNote) {
+			contentEl.createEl("div", { cls: "setting-item-name", text: "Note" });
+			const note = contentEl.createEl("textarea", { cls: "scientific-article-card-note-input", attr: { rows: 6 } });
+			note.value = v.note || "";
+			note.addEventListener("input", () => (v.note = note.value));
+			note.addEventListener("keydown", (e) => {
+				if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+					e.preventDefault();
+					submit();
+				}
+			});
+		}
+		if (this.options.hint) contentEl.createEl("p", { cls: "setting-item-description", text: this.options.hint });
 		new Setting(contentEl)
 			.addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
 			.addButton((b) => b.setButtonText("Save").setCta().onClick(submit));
 	}
 	onClose() {
 		this.contentEl.empty();
+	}
+}
+
+/** Re-renders a card when the note it depends on (its paper note, or itself) changes. */
+class CardRenderChild extends MarkdownRenderChild {
+	constructor(el, plugin, render) {
+		super(el);
+		this.plugin = plugin;
+		this.render = render;
+		this.watchPath = null;
+	}
+	onload() {
+		this.update();
+		this.registerEvent(
+			this.plugin.app.metadataCache.on("changed", (file) => {
+				if (this.watchPath && file.path === this.watchPath) this.update();
+			})
+		);
+	}
+	update() {
+		this.containerEl.empty();
+		this.watchPath = this.render(this.containerEl) || null;
 	}
 }
 
@@ -1089,15 +1312,31 @@ class ScientificArticleCardPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		this.registerMarkdownCodeBlockProcessor(CODE_BLOCK_LANG, (source, el, ctx) =>
-			renderCard(source, el, this.settings, () => this.editNotes(source, el, ctx))
-		);
+		this.cards = new Set();
+		this.registerMarkdownCodeBlockProcessor(CODE_BLOCK_LANG, (source, el, ctx) => {
+			ctx.addChild(new CardRenderChild(el, this, (target) => this.renderPaperBlock(source, target, ctx, el)));
+		});
+		this.registerMarkdownCodeBlockProcessor(PAPER_NOTE_LANG, (source, el, ctx) => {
+			ctx.addChild(new CardRenderChild(el, this, (target) => this.renderPaperNoteBlock(target, ctx)));
+		});
 
 		this.addCommand({
 			id: "convert-selection-to-scientific-article-card",
 			name: "Convert selection (or identifier under cursor) to article card",
 			icon: "book-open",
 			editorCallback: (editor) => this.convertSelection(editor),
+		});
+		this.addCommand({
+			id: "create-paper-note",
+			name: "Create paper note from PMID / DOI / URL…",
+			icon: "file-plus",
+			callback: () =>
+				new IdentifierModal(this.app, (v) => {
+					const ident = this.parse(v.split(/[\s,;]+/)[0], true);
+					if (!ident) return new Notice("Scientific Article Card: no PMID, PMCID, DOI, arXiv ID or URL found");
+					const active = this.app.workspace.getActiveFile();
+					this.createPaperNote({ ident, card: null, sourcePath: active ? active.path : "", block: null });
+				}).open(),
 		});
 		this.addCommand({
 			id: "insert-scientific-article-card",
@@ -1144,6 +1383,215 @@ class ScientificArticleCardPlugin extends Plugin {
 		return parseIdentifier(text, { allowBare, domains: this.domains() });
 	}
 
+	track(card) {
+		if (!card) return;
+		for (const c of this.cards) if (!c.isConnected) this.cards.delete(c);
+		this.cards.add(card);
+	}
+
+	refreshColors() {
+		for (const c of this.cards) {
+			if (c.isConnected) applyColorClasses(c, this.settings);
+			else this.cards.delete(c);
+		}
+	}
+
+	/** A ```paper card. Returns the path of its linked paper note (watched for changes). */
+	renderPaperBlock(source, target, ctx, sectionEl) {
+		let d;
+		try {
+			d = parseYaml(source) || {};
+		} catch (e) {
+			target.createDiv({ cls: "scientific-article-card-error", text: `Scientific Article Card: invalid YAML — ${e.message}` });
+			return null;
+		}
+		const linked = this.findLinkedNote(d, ctx.sourcePath);
+		const block = { source, el: sectionEl, ctx };
+		let actions;
+		if (linked) {
+			const fm = (this.app.metadataCache.getFileCache(linked) || {}).frontmatter || {};
+			actions = {
+				user: { status: fm.status, rating: fm.rating, tags: fm.tags, note: "" },
+				note: { label: "Open note", icon: "file-text", onClick: () => this.app.workspace.getLeaf("tab").openFile(linked) },
+				onEdit: () => this.editProperties(linked, d.title),
+			};
+		} else {
+			actions = {
+				note: {
+					label: "Create note",
+					icon: "file-plus",
+					onClick: () => this.createPaperNote({ ident: identFromCard(d), card: d, sourcePath: ctx.sourcePath, block }),
+				},
+				onEdit: () => this.editNotes(source, sectionEl, ctx),
+			};
+		}
+		this.track(renderCardData(d, target, this.settings, actions));
+		return linked ? linked.path : null;
+	}
+
+	/** The ```paper-note card inside a paper note: drawn from the note's own properties. */
+	renderPaperNoteBlock(target, ctx) {
+		const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+		const fm = file instanceof TFile ? (this.app.metadataCache.getFileCache(file) || {}).frontmatter : null;
+		if (!fm || (!fm.title && !fm.url)) {
+			target.createDiv({ cls: "scientific-article-card-error", text: "Scientific Article Card: this note has no paper properties (title, url…) yet." });
+			return ctx.sourcePath;
+		}
+		this.track(renderCardData(fmToCard(fm, this.settings), target, this.settings, { onEdit: () => this.editProperties(file, fm.title) }));
+		return ctx.sourcePath;
+	}
+
+	/** The card's paper note: its `paper-note` link, or else a paper note with the same DOI / PMID. */
+	findLinkedNote(d, sourcePath) {
+		if (d["paper-note"]) {
+			const f = this.app.metadataCache.getFirstLinkpathDest(linkpathFrom(d["paper-note"]), sourcePath);
+			if (f) return f;
+			// links inside code blocks aren't updated when a note is renamed: fall back to the identifiers
+			return this.findPaperNote(d.doi, d.pmid);
+		}
+		return null;
+	}
+
+	findPaperNote(doi, pmid) {
+		if (!doi && !pmid) return null;
+		const d = doi ? String(doi).toLowerCase() : "";
+		const p = pmid ? String(pmid) : "";
+		for (const f of this.app.vault.getMarkdownFiles()) {
+			const fm = (this.app.metadataCache.getFileCache(f) || {}).frontmatter;
+			if (!fm || fm.type !== "paper") continue;
+			if ((d && fm.doi && String(fm.doi).toLowerCase() === d) || (p && fm.pmid && String(fm.pmid) === p)) return f;
+		}
+		return null;
+	}
+
+	paperFolder(sourcePath) {
+		if (this.settings.paperNoteLocation === "folder") return normalizePath(this.settings.paperNoteFolder || "/");
+		const parent = sourcePath && sourcePath.includes("/") ? sourcePath.slice(0, sourcePath.lastIndexOf("/")) : "";
+		return normalizePath([parent, this.settings.paperNoteSubfolder].filter(Boolean).join("/") || "/");
+	}
+
+	async ensureFolder(folder) {
+		if (folder === "/" || this.app.vault.getAbstractFileByPath(folder)) return;
+		try {
+			await this.app.vault.createFolder(folder);
+		} catch (e) {
+			/* created meanwhile */
+		}
+	}
+
+	/** base, then base+"a", base+"b"… for a different paper with the same author, journal and year. */
+	uniquePath(folder, base) {
+		const dir = folder === "/" ? "" : folder + "/";
+		const letters = "abcdefghijklmnopqrstuvwxyz";
+		for (let i = -1; i < letters.length; i++) {
+			const path = normalizePath(`${dir}${base}${i < 0 ? "" : letters[i]}.md`);
+			if (!this.app.vault.getAbstractFileByPath(path)) return path;
+		}
+		return normalizePath(`${dir}${base}_${Date.now()}.md`);
+	}
+
+	async createPaperNote({ ident, card, sourcePath, block }) {
+		if (!ident && !card) return;
+		let paper = null;
+		if (ident) {
+			try {
+				paper = await new Resolver(this.settings).resolve(ident);
+			} catch (e) {
+				if (!card) return new Notice(`Scientific Article Card: ${e.message || e}`, 8000);
+			}
+		}
+		if (!paper) paper = cardToPaper(card);
+		const user = card
+			? {
+					status: STATUSES[card.status] ? card.status : "",
+					rating: Math.max(0, Math.min(5, parseInt(card.rating, 10) || 0)),
+					tags: parseTags(card.tags),
+					note: card.note ? String(card.note) : "",
+			  }
+			: { status: "", rating: 0, tags: [], note: "" };
+
+		let file = this.findPaperNote(paper.doi || (card && card.doi), paper.pmid || (card && card.pmid));
+		if (file) {
+			// already exists: merge the card's notes into it without overwriting anything
+			await this.app.fileManager.processFrontMatter(file, (fm) => {
+				if (!fm.status && user.status) fm.status = user.status;
+				if (!fm.rating && user.rating) fm.rating = user.rating;
+				const tags = parseTags(fm.tags);
+				const add = user.tags.filter((t) => !tags.some((x) => x.toLowerCase() === t.toLowerCase()));
+				if (add.length) fm.tags = tags.concat(add);
+			});
+			if (user.note.trim()) await this.app.vault.process(file, (text) => text.replace(/\s*$/, "") + "\n\n" + user.note.trim() + "\n");
+		} else {
+			const folder = this.paperFolder(sourcePath);
+			await this.ensureFolder(folder);
+			const path = this.uniquePath(folder, paperNoteBaseName(paper));
+			file = await this.app.vault.create(path, paperNoteBody(paper.abstract, user.note));
+			const props = paperProps(paper, user, this.settings);
+			await this.app.fileManager.processFrontMatter(file, (fm) => Object.assign(fm, props));
+		}
+
+		if (block) {
+			const link = this.app.fileManager.generateMarkdownLink(file, block.ctx.sourcePath);
+			const ok = await this.rewriteCard(block, (lines) =>
+				setFields(lines, { status: null, rating: null, tags: null, note: null, "paper-note": link })
+			);
+			if (!ok) new Notice(`Scientific Article Card: created ${file.basename}, but couldn't link the card to it.`);
+		}
+		await this.app.workspace.getLeaf("tab").openFile(file);
+	}
+
+	/** Edit status, rating and tags of a paper note (its properties). */
+	editProperties(file, title) {
+		const fm = (this.app.metadataCache.getFileCache(file) || {}).frontmatter || {};
+		const values = {
+			status: STATUSES[fm.status] ? fm.status : "",
+			rating: Math.max(0, Math.min(5, parseInt(fm.rating, 10) || 0)),
+			tags: parseTags(fm.tags),
+			note: "",
+		};
+		new NotesModal(
+			this.app,
+			title ? String(title) : file.basename,
+			values,
+			(v) =>
+				this.app.fileManager.processFrontMatter(file, (f) => {
+					if (v.status) f.status = v.status;
+					else delete f.status;
+					if (v.rating) f.rating = v.rating;
+					else delete f.rating;
+					if (v.tags.length) f.tags = v.tags;
+					else delete f.tags;
+				}),
+			{ showNote: false, hint: `Saved as properties of ${file.basename}. Write your notes in the note itself.` }
+		).open();
+	}
+
+	/** Rewrite the YAML lines of the card `block` in its note. Returns false if the card can't be found. */
+	async rewriteCard(block, transform) {
+		const { source, el, ctx } = block;
+		const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+		if (!(file instanceof TFile)) return false;
+		const info = ctx.getSectionInfo(el);
+		const hint = info ? info.lineStart : 0;
+		// make sure pending edits in an open editor are on disk before rewriting the file
+		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+			if (leaf.view.file && leaf.view.file.path === file.path && typeof leaf.view.save === "function") await leaf.view.save();
+		}
+		let found = true;
+		await this.app.vault.process(file, (text) => {
+			const lines = text.split("\n");
+			const found_ = findBlock(lines, source, hint);
+			if (!found_) {
+				found = false;
+				return text;
+			}
+			const [start, end] = found_;
+			lines.splice(start + 1, end - start - 1, ...transform(lines.slice(start + 1, end)));
+			return lines.join("\n");
+		});
+		return found;
+	}
+
 	editNotes(source, el, ctx) {
 		let d;
 		try {
@@ -1164,25 +1612,7 @@ class ScientificArticleCardPlugin extends Plugin {
 	async saveNotes(source, el, ctx, v) {
 		const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
 		if (!(file instanceof TFile)) return;
-		const info = ctx.getSectionInfo(el);
-		const hint = info ? info.lineStart : 0;
-		// make sure pending edits in an open editor are on disk before rewriting the file
-		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
-			if (leaf.view.file && leaf.view.file.path === file.path && typeof leaf.view.save === "function") await leaf.view.save();
-		}
-		let found = true;
-		await this.app.vault.process(file, (text) => {
-			const lines = text.split("\n");
-			const block = findBlock(lines, source, hint);
-			if (!block) {
-				found = false;
-				return text;
-			}
-			const [start, end] = block;
-			const inner = setUserFields(lines.slice(start + 1, end), v);
-			lines.splice(start + 1, end - start - 1, ...inner);
-			return lines.join("\n");
-		});
+		const found = await this.rewriteCard({ source, el, ctx }, (lines) => setUserFields(lines, v));
 		if (!found) {
 			new Notice("Scientific Article Card: couldn't find this card in the note. Try again after it re-renders.");
 			return;
@@ -1435,6 +1865,77 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 		toggle("Fetch preview image", "Load the publisher page to grab its og:image. Some publishers block this; it is skipped silently.", "fetchImage");
 		toggle("Expand abstract by default", "For the card view.", "abstractOpen");
 
+		new Setting(containerEl).setName("Colors").setHeading();
+		new Setting(containerEl)
+			.setName("Card style")
+			.setDesc("Mantine: white or dark card with a soft shadow. Match Obsidian theme: your theme's colors and font.")
+			.addDropdown((dd) =>
+				dd
+					.addOption("mantine", "Mantine")
+					.addOption("obsidian", "Match Obsidian theme")
+					.setValue(s.cardStyle)
+					.onChange(async (v) => {
+						s.cardStyle = v;
+						await save();
+						this.plugin.refreshColors();
+					})
+			);
+		const colorSetting = (name, key) =>
+			new Setting(containerEl).setName(name).addDropdown((dd) => {
+				for (const c of COLORS) dd.addOption(c, c === "accent" ? "Obsidian accent" : c.charAt(0).toUpperCase() + c.slice(1));
+				dd.setValue(s[key]).onChange(async (v) => {
+					s[key] = v;
+					await save();
+					this.plugin.refreshColors();
+				});
+			});
+		colorSetting("Publication type color", "typeColor");
+		colorSetting("Keyword color", "keywordColor");
+		colorSetting("Tag and note color", "tagColor");
+
+		new Setting(containerEl).setName("Paper notes").setHeading();
+		new Setting(containerEl)
+			.setName("Location")
+			.setDesc("Where Create note puts the paper note. Existing paper notes (same DOI or PMID) are reused wherever they are.")
+			.addDropdown((dd) =>
+				dd
+					.addOption("project", "Next to the note with the card")
+					.addOption("folder", "In a dedicated folder")
+					.setValue(s.paperNoteLocation)
+					.onChange(async (v) => {
+						s.paperNoteLocation = v;
+						await save();
+						this.display();
+					})
+			);
+		if (s.paperNoteLocation === "folder") {
+			new Setting(containerEl)
+				.setName("Folder")
+				.setDesc("Vault folder for all paper notes. Created if needed.")
+				.addText((t) =>
+					t
+						.setPlaceholder("4_Resources/Papers")
+						.setValue(s.paperNoteFolder)
+						.onChange(async (v) => {
+							s.paperNoteFolder = v.trim();
+							await save();
+						})
+				);
+		} else {
+			new Setting(containerEl)
+				.setName("Subfolder")
+				.setDesc("Optional subfolder next to the note with the card, e.g. Papers. Leave empty for the same folder.")
+				.addText((t) =>
+					t
+						.setPlaceholder("Papers")
+						.setValue(s.paperNoteSubfolder)
+						.onChange(async (v) => {
+							s.paperNoteSubfolder = v.trim();
+							await save();
+						})
+				);
+		}
+
 		new Setting(containerEl).setName("Your notes").setHeading();
 		toggle(
 			"Add card tags to the note's tags",
@@ -1482,4 +1983,4 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 module.exports = ScientificArticleCardPlugin;
 module.exports.default = ScientificArticleCardPlugin;
 // exposed for testing
-module.exports._internals = { parseTags, setUserFields, findBlock, renderCard, toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };
+module.exports._internals = { parseTags, setFields, setUserFields, findBlock, renderCard, renderCardData, paperNoteBaseName, paperProps, paperNoteBody, fmToCard, cardToPaper, identFromCard, linkpathFrom, colorClasses, toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };

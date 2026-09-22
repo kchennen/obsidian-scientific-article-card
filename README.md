@@ -65,6 +65,7 @@ Markdown links (`[text](url)`) and `<url>` are accepted too. Trailing `/full`, `
 - ⌨️ **Commands**
   - *Convert selection (or identifier under cursor) to article card* — accepts several identifiers separated by spaces, commas or new lines
   - *Insert article card from PMID / DOI / URL…* — opens a prompt
+  - *Create paper note from PMID / DOI / URL…* — see [Paper notes](#-paper-notes)
 - 🖱️ **Editor context menu**: *Convert to article card*.
 
 ## 🎨 Output formats
@@ -78,7 +79,7 @@ Markdown links (`[text](url)`) and `<url>` are accepted too. Trailing `/full`, `
 
 ## 📝 Your notes
 
-Add your own reading status, rating, tags and a note to any card: select the ✏️ button in the card's header, fill in the form and save. They appear in a separate *Your notes* section, so what you wrote stays apart from the fetched metadata.
+Add your own reading status, rating, tags and a note to any card: select the ✏️ button in the card's header, fill in the form and save. (Once a card has a [paper note](#-paper-notes), these live in the paper note instead.) They appear in a separate *Your notes* section, so what you wrote stays apart from the fetched metadata.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/notes-dark.png">
@@ -97,9 +98,37 @@ note: "Compare with ESMFold on our cohort."
 
 **Tags in Obsidian.** Obsidian doesn't index tags inside code blocks. With *Add card tags to the note's tags* on (the default), saving notes also adds the card's tags to the note's `tags` property, so the tag pane, search, Dataview and Bases find the note. Removing a tag from a card doesn't remove it from the property, since you may use it elsewhere in the note.
 
+## 📚 Paper notes
+
+For papers you work with, create **one note per paper** with the 📄 button in the card's header (*Create note*). The paper's metadata becomes the note's properties, so each paper has its own tags, status and rating in Obsidian's tag pane, search, Dataview and Bases.
+
+- **Name**: `FirstAuthor_JournalAbbreviation_Year`, e.g. `Jumper_Nature_2021`, `Zucca_HumGenet_2025`. A different paper with the same name gets `…2025a`, `…2025b`, and so on. If a paper note with the same DOI or PMID already exists, it is reused.
+- **Location**: next to the note with the card (optionally in a subfolder), or in one dedicated folder. See the settings.
+- **Content**: the properties (`type: paper`, `title`, `authors`, `journal`, `year`, `doi`, `pmid`, `pmcid`, `url`, `image`, `publication-type`, `keywords`, `status`, `rating`, `tags`, `created`), a card drawn from them (a `paper-note` code block), the abstract, and a *Notes* section.
+- **Your notes move with it**: the card's status, rating and tags become the note's properties, and its note goes into *Notes*.
+- **Reading lists keep their cards**: the card gets a `paper-note` link, its 📄 button becomes *Open note*, and its *Your notes* section shows the paper note's status, rating and tags. The ✏️ button edits the paper note's properties.
+
+Example properties:
+
+```yaml
+type: paper
+title: Highly accurate protein structure prediction with AlphaFold
+authors: [Jumper J, Evans R, Pritzel A, …]
+journal: Nature
+year: 2021
+doi: 10.1038/s41586-021-03819-2
+pmid: "34265844"
+status: to-read
+rating: 4
+tags: [impatient2, methods]
+```
+
 ## ⚙️ Settings
 
 Main link target (what you pasted / DOI / PubMed), author format (`Smith JA` or `John A. Smith`), maximum authors before *et al.*, include abstract / keywords / MeSH terms, fetch preview image, expand abstract by default, add card tags to the note's tags, publisher domains for paste, contact email and NCBI API key.
+
+- **Colors**: card style (*Mantine*, or *Match Obsidian theme* to use your theme's colors and font), and the colors of the publication type badge, the keywords, and your tags and note (Mantine's 13 colors, or your Obsidian accent color).
+- **Paper notes**: location (next to the note with the card, with an optional subfolder, or a dedicated folder).
 
 ## 🌐 Network use
 
@@ -142,6 +171,7 @@ gh attestation verify main.js --repo kchennen/obsidian-scientific-article-card
 
 - Some publishers (e.g. Elsevier / ScienceDirect) block automated page requests. Paste the DOI or PMID instead of the page URL.
 - The preview image is the article's first figure when it is open access in PubMed Central. Otherwise it comes from the publisher page, which many publishers block. Articles indexed in PubMed fall back to PubMed's preview image.
+- The link from a card to its paper note sits inside a code block, which Obsidian doesn't track: it doesn't show in backlinks and isn't updated when you rename the paper note. The card then finds the note by its DOI or PMID instead.
 
 ## 👤 Author
 

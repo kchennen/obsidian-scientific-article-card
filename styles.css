@@ -1,34 +1,58 @@
 /*
  * Card styled after Mantine (https://mantine.dev): Card withBorder + shadow="sm" + radius="md",
- * light-variant Badges (blue type, violet keywords, teal tags), Anchor, Blockquote-like note and
- * Accordion-like abstract toggle, with Mantine's default
- * light/dark palettes following Obsidian's theme.
+ * light-variant Badges, Anchor, Blockquote-like note and Accordion-like abstract toggle.
+ * Colors use Mantine's palette in light and dark (following Obsidian's theme). The type badge,
+ * keyword and tag colors, and the card surface, can be changed in the settings (sac-* classes).
  */
 .scientific-article-card {
 	--sac-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 	--sac-radius-sm: 4px;
 	--sac-radius-md: 8px;
 	--sac-radius-xl: 32px;
-	/* light (Mantine defaults) */
+	/* surface: Mantine light */
 	--sac-body: #ffffff;
 	--sac-text: #000000;
 	--sac-dimmed: #868e96;
 	--sac-border: #dee2e6;
 	--sac-hover: #f8f9fa;
 	--sac-anchor: #228be6;
-	--sac-badge-bg: rgba(34, 139, 230, 0.1);
-	--sac-badge-color: #228be6;
-	--sac-violet-bg: rgba(121, 80, 242, 0.1);
-	--sac-violet: #7048e8;
-	--sac-teal-bg: rgba(18, 184, 134, 0.1);
-	--sac-teal: #099268;
-	--sac-orange-bg: rgba(253, 126, 20, 0.1);
-	--sac-orange: #e8590c;
-	--sac-green-bg: rgba(64, 192, 87, 0.1);
-	--sac-green: #2f9e44;
-	--sac-yellow: #f59f00;
 	--sac-thumb-bg: #f1f3f5;
+	--sac-star: #f59f00;
 	--sac-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0 10px 15px -5px, rgba(0, 0, 0, 0.04) 0 7px 7px -5px;
+	/* Mantine palette, light-variant badge colors */
+	--sac-blue-fg: #1971c2;
+	--sac-blue-bg: rgba(34, 139, 230, 0.1);
+	--sac-cyan-fg: #0c8599;
+	--sac-cyan-bg: rgba(21, 170, 191, 0.1);
+	--sac-teal-fg: #099268;
+	--sac-teal-bg: rgba(18, 184, 134, 0.1);
+	--sac-green-fg: #2f9e44;
+	--sac-green-bg: rgba(64, 192, 87, 0.1);
+	--sac-lime-fg: #5c940d;
+	--sac-lime-bg: rgba(130, 201, 30, 0.1);
+	--sac-yellow-fg: #e67700;
+	--sac-yellow-bg: rgba(250, 176, 5, 0.1);
+	--sac-orange-fg: #e8590c;
+	--sac-orange-bg: rgba(253, 126, 20, 0.1);
+	--sac-red-fg: #e03131;
+	--sac-red-bg: rgba(250, 82, 82, 0.1);
+	--sac-pink-fg: #c2255c;
+	--sac-pink-bg: rgba(230, 73, 128, 0.1);
+	--sac-grape-fg: #9c36b5;
+	--sac-grape-bg: rgba(190, 75, 219, 0.1);
+	--sac-violet-fg: #7048e8;
+	--sac-violet-bg: rgba(121, 80, 242, 0.1);
+	--sac-indigo-fg: #4263eb;
+	--sac-indigo-bg: rgba(76, 110, 245, 0.1);
+	--sac-gray-fg: #495057;
+	--sac-gray-bg: rgba(134, 142, 150, 0.1);
+	/* roles (changed by the sac-type-*, sac-kw-*, sac-tag-* classes) */
+	--sac-type-fg: var(--sac-blue-fg);
+	--sac-type-bg: var(--sac-blue-bg);
+	--sac-kw-fg: var(--sac-violet-fg);
+	--sac-kw-bg: var(--sac-violet-bg);
+	--sac-tag-fg: var(--sac-teal-fg);
+	--sac-tag-bg: var(--sac-teal-bg);
 
 	container: scientific-article-card / inline-size;
 	margin: 4px 0;
@@ -51,20 +75,92 @@
 	--sac-border: #424242;
 	--sac-hover: #3b3b3b;
 	--sac-anchor: #4dabf7;
-	--sac-badge-bg: rgba(34, 139, 230, 0.15);
-	--sac-badge-color: #4dabf7;
-	--sac-violet-bg: rgba(121, 80, 242, 0.15);
-	--sac-violet: #b197fc;
-	--sac-teal-bg: rgba(18, 184, 134, 0.15);
-	--sac-teal: #63e6be;
-	--sac-orange-bg: rgba(253, 126, 20, 0.15);
-	--sac-orange: #ffa94d;
-	--sac-green-bg: rgba(64, 192, 87, 0.15);
-	--sac-green: #8ce99a;
-	--sac-yellow: #fcc419;
 	--sac-thumb-bg: #242424;
+	--sac-star: #fcc419;
 	--sac-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2) 0 10px 15px -5px;
+	--sac-blue-fg: #74c0fc;
+	--sac-blue-bg: rgba(34, 139, 230, 0.15);
+	--sac-cyan-fg: #66d9e8;
+	--sac-cyan-bg: rgba(21, 170, 191, 0.15);
+	--sac-teal-fg: #63e6be;
+	--sac-teal-bg: rgba(18, 184, 134, 0.15);
+	--sac-green-fg: #8ce99a;
+	--sac-green-bg: rgba(64, 192, 87, 0.15);
+	--sac-lime-fg: #c0eb75;
+	--sac-lime-bg: rgba(130, 201, 30, 0.15);
+	--sac-yellow-fg: #ffe066;
+	--sac-yellow-bg: rgba(250, 176, 5, 0.15);
+	--sac-orange-fg: #ffa94d;
+	--sac-orange-bg: rgba(253, 126, 20, 0.15);
+	--sac-red-fg: #ff8787;
+	--sac-red-bg: rgba(250, 82, 82, 0.15);
+	--sac-pink-fg: #f783ac;
+	--sac-pink-bg: rgba(230, 73, 128, 0.15);
+	--sac-grape-fg: #e599f7;
+	--sac-grape-bg: rgba(190, 75, 219, 0.15);
+	--sac-violet-fg: #b197fc;
+	--sac-violet-bg: rgba(121, 80, 242, 0.15);
+	--sac-indigo-fg: #91a7ff;
+	--sac-indigo-bg: rgba(76, 110, 245, 0.15);
+	--sac-gray-fg: #ced4da;
+	--sac-gray-bg: rgba(134, 142, 150, 0.15);
 }
+
+/* "Match Obsidian theme" card style */
+.scientific-article-card.sac-surface-obsidian {
+	--sac-font: var(--font-interface);
+	--sac-body: var(--background-primary-alt);
+	--sac-text: var(--text-normal);
+	--sac-dimmed: var(--text-muted);
+	--sac-border: var(--background-modifier-border);
+	--sac-hover: var(--background-modifier-hover);
+	--sac-anchor: var(--text-accent);
+	--sac-thumb-bg: var(--background-secondary);
+	--sac-shadow: none;
+}
+
+.scientific-article-card.sac-type-blue { --sac-type-fg: var(--sac-blue-fg); --sac-type-bg: var(--sac-blue-bg); }
+.scientific-article-card.sac-type-cyan { --sac-type-fg: var(--sac-cyan-fg); --sac-type-bg: var(--sac-cyan-bg); }
+.scientific-article-card.sac-type-teal { --sac-type-fg: var(--sac-teal-fg); --sac-type-bg: var(--sac-teal-bg); }
+.scientific-article-card.sac-type-green { --sac-type-fg: var(--sac-green-fg); --sac-type-bg: var(--sac-green-bg); }
+.scientific-article-card.sac-type-lime { --sac-type-fg: var(--sac-lime-fg); --sac-type-bg: var(--sac-lime-bg); }
+.scientific-article-card.sac-type-yellow { --sac-type-fg: var(--sac-yellow-fg); --sac-type-bg: var(--sac-yellow-bg); }
+.scientific-article-card.sac-type-orange { --sac-type-fg: var(--sac-orange-fg); --sac-type-bg: var(--sac-orange-bg); }
+.scientific-article-card.sac-type-red { --sac-type-fg: var(--sac-red-fg); --sac-type-bg: var(--sac-red-bg); }
+.scientific-article-card.sac-type-pink { --sac-type-fg: var(--sac-pink-fg); --sac-type-bg: var(--sac-pink-bg); }
+.scientific-article-card.sac-type-grape { --sac-type-fg: var(--sac-grape-fg); --sac-type-bg: var(--sac-grape-bg); }
+.scientific-article-card.sac-type-violet { --sac-type-fg: var(--sac-violet-fg); --sac-type-bg: var(--sac-violet-bg); }
+.scientific-article-card.sac-type-indigo { --sac-type-fg: var(--sac-indigo-fg); --sac-type-bg: var(--sac-indigo-bg); }
+.scientific-article-card.sac-type-gray { --sac-type-fg: var(--sac-gray-fg); --sac-type-bg: var(--sac-gray-bg); }
+.scientific-article-card.sac-type-accent { --sac-type-fg: var(--text-accent); --sac-type-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent); }
+.scientific-article-card.sac-kw-blue { --sac-kw-fg: var(--sac-blue-fg); --sac-kw-bg: var(--sac-blue-bg); }
+.scientific-article-card.sac-kw-cyan { --sac-kw-fg: var(--sac-cyan-fg); --sac-kw-bg: var(--sac-cyan-bg); }
+.scientific-article-card.sac-kw-teal { --sac-kw-fg: var(--sac-teal-fg); --sac-kw-bg: var(--sac-teal-bg); }
+.scientific-article-card.sac-kw-green { --sac-kw-fg: var(--sac-green-fg); --sac-kw-bg: var(--sac-green-bg); }
+.scientific-article-card.sac-kw-lime { --sac-kw-fg: var(--sac-lime-fg); --sac-kw-bg: var(--sac-lime-bg); }
+.scientific-article-card.sac-kw-yellow { --sac-kw-fg: var(--sac-yellow-fg); --sac-kw-bg: var(--sac-yellow-bg); }
+.scientific-article-card.sac-kw-orange { --sac-kw-fg: var(--sac-orange-fg); --sac-kw-bg: var(--sac-orange-bg); }
+.scientific-article-card.sac-kw-red { --sac-kw-fg: var(--sac-red-fg); --sac-kw-bg: var(--sac-red-bg); }
+.scientific-article-card.sac-kw-pink { --sac-kw-fg: var(--sac-pink-fg); --sac-kw-bg: var(--sac-pink-bg); }
+.scientific-article-card.sac-kw-grape { --sac-kw-fg: var(--sac-grape-fg); --sac-kw-bg: var(--sac-grape-bg); }
+.scientific-article-card.sac-kw-violet { --sac-kw-fg: var(--sac-violet-fg); --sac-kw-bg: var(--sac-violet-bg); }
+.scientific-article-card.sac-kw-indigo { --sac-kw-fg: var(--sac-indigo-fg); --sac-kw-bg: var(--sac-indigo-bg); }
+.scientific-article-card.sac-kw-gray { --sac-kw-fg: var(--sac-gray-fg); --sac-kw-bg: var(--sac-gray-bg); }
+.scientific-article-card.sac-kw-accent { --sac-kw-fg: var(--text-accent); --sac-kw-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent); }
+.scientific-article-card.sac-tag-blue { --sac-tag-fg: var(--sac-blue-fg); --sac-tag-bg: var(--sac-blue-bg); }
+.scientific-article-card.sac-tag-cyan { --sac-tag-fg: var(--sac-cyan-fg); --sac-tag-bg: var(--sac-cyan-bg); }
+.scientific-article-card.sac-tag-teal { --sac-tag-fg: var(--sac-teal-fg); --sac-tag-bg: var(--sac-teal-bg); }
+.scientific-article-card.sac-tag-green { --sac-tag-fg: var(--sac-green-fg); --sac-tag-bg: var(--sac-green-bg); }
+.scientific-article-card.sac-tag-lime { --sac-tag-fg: var(--sac-lime-fg); --sac-tag-bg: var(--sac-lime-bg); }
+.scientific-article-card.sac-tag-yellow { --sac-tag-fg: var(--sac-yellow-fg); --sac-tag-bg: var(--sac-yellow-bg); }
+.scientific-article-card.sac-tag-orange { --sac-tag-fg: var(--sac-orange-fg); --sac-tag-bg: var(--sac-orange-bg); }
+.scientific-article-card.sac-tag-red { --sac-tag-fg: var(--sac-red-fg); --sac-tag-bg: var(--sac-red-bg); }
+.scientific-article-card.sac-tag-pink { --sac-tag-fg: var(--sac-pink-fg); --sac-tag-bg: var(--sac-pink-bg); }
+.scientific-article-card.sac-tag-grape { --sac-tag-fg: var(--sac-grape-fg); --sac-tag-bg: var(--sac-grape-bg); }
+.scientific-article-card.sac-tag-violet { --sac-tag-fg: var(--sac-violet-fg); --sac-tag-bg: var(--sac-violet-bg); }
+.scientific-article-card.sac-tag-indigo { --sac-tag-fg: var(--sac-indigo-fg); --sac-tag-bg: var(--sac-indigo-bg); }
+.scientific-article-card.sac-tag-gray { --sac-tag-fg: var(--sac-gray-fg); --sac-tag-bg: var(--sac-gray-bg); }
+.scientific-article-card.sac-tag-accent { --sac-tag-fg: var(--text-accent); --sac-tag-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent); }
 
 .scientific-article-card-main {
 	display: flex;
@@ -103,8 +199,8 @@
 	height: 18px;
 	padding: 0 8px;
 	border-radius: var(--sac-radius-xl);
-	background: var(--sac-badge-bg);
-	color: var(--sac-badge-color);
+	background: var(--sac-type-bg);
+	color: var(--sac-type-fg);
 	font-size: 10px;
 	font-weight: 700;
 	letter-spacing: 0.25px;
@@ -214,13 +310,18 @@
 }
 
 .scientific-article-card-keyword {
-	background: var(--sac-violet-bg);
-	color: var(--sac-violet);
+	background: var(--sac-kw-bg);
+	color: var(--sac-kw-fg);
 }
 
-/* ActionIcon variant="subtle" in the header */
-.scientific-article-card .scientific-article-card-edit {
+/* ActionIcon variant="subtle" buttons in the header */
+.scientific-article-card-actions {
+	display: inline-flex;
+	gap: 2px;
 	margin-left: auto;
+}
+
+.scientific-article-card .scientific-article-card-edit {
 	padding: 2px;
 	width: 26px;
 	height: 26px;
@@ -263,35 +364,40 @@
 }
 
 .scientific-article-card-status {
-	background: var(--sac-badge-bg);
-	color: var(--sac-badge-color);
+	background: var(--sac-gray-bg);
+	color: var(--sac-gray-fg);
 }
 
 .scientific-article-card-status.is-to-read {
 	background: var(--sac-orange-bg);
-	color: var(--sac-orange);
+	color: var(--sac-orange-fg);
+}
+
+.scientific-article-card-status.is-reading {
+	background: var(--sac-blue-bg);
+	color: var(--sac-blue-fg);
 }
 
 .scientific-article-card-status.is-read {
 	background: var(--sac-green-bg);
-	color: var(--sac-green);
+	color: var(--sac-green-fg);
 }
 
 .scientific-article-card-rating {
-	color: var(--sac-yellow);
+	color: var(--sac-star);
 	font-size: 15px;
 	letter-spacing: 1px;
 }
 
 .scientific-article-card-tag {
-	background: var(--sac-teal-bg);
-	color: var(--sac-teal);
+	background: var(--sac-tag-bg);
+	color: var(--sac-tag-fg);
 }
 
 .scientific-article-card-note {
 	margin: 10px 0 10px;
 	padding: 2px 0 2px 12px;
-	border-left: 3px solid var(--sac-teal);
+	border-left: 3px solid var(--sac-tag-fg);
 	color: var(--sac-text);
 	font-size: 14px;
 	white-space: pre-line;
