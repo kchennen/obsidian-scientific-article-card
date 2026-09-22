@@ -46,13 +46,29 @@
 	--sac-indigo-bg: rgba(76, 110, 245, 0.1);
 	--sac-gray-fg: #495057;
 	--sac-gray-bg: rgba(134, 142, 150, 0.1);
+	--sac-blue-solid: #228be6;
+	--sac-cyan-solid: #15aabf;
+	--sac-teal-solid: #12b886;
+	--sac-green-solid: #40c057;
+	--sac-lime-solid: #82c91e;
+	--sac-yellow-solid: #fab005;
+	--sac-orange-solid: #fd7e14;
+	--sac-red-solid: #fa5252;
+	--sac-pink-solid: #e64980;
+	--sac-grape-solid: #be4bdb;
+	--sac-violet-solid: #7950f2;
+	--sac-indigo-solid: #4c6ef5;
+	--sac-gray-solid: #868e96;
 	/* roles (changed by the sac-type-*, sac-kw-*, sac-tag-* classes) */
 	--sac-type-fg: var(--sac-blue-fg);
 	--sac-type-bg: var(--sac-blue-bg);
+	--sac-type-solid: var(--sac-blue-solid);
 	--sac-kw-fg: var(--sac-violet-fg);
 	--sac-kw-bg: var(--sac-violet-bg);
+	--sac-kw-solid: var(--sac-violet-solid);
 	--sac-tag-fg: var(--sac-teal-fg);
 	--sac-tag-bg: var(--sac-teal-bg);
+	--sac-tag-solid: var(--sac-teal-solid);
 
 	container: scientific-article-card / inline-size;
 	margin: 4px 0;
@@ -119,48 +135,48 @@
 	--sac-shadow: none;
 }
 
-.scientific-article-card.sac-type-blue { --sac-type-fg: var(--sac-blue-fg); --sac-type-bg: var(--sac-blue-bg); }
-.scientific-article-card.sac-type-cyan { --sac-type-fg: var(--sac-cyan-fg); --sac-type-bg: var(--sac-cyan-bg); }
-.scientific-article-card.sac-type-teal { --sac-type-fg: var(--sac-teal-fg); --sac-type-bg: var(--sac-teal-bg); }
-.scientific-article-card.sac-type-green { --sac-type-fg: var(--sac-green-fg); --sac-type-bg: var(--sac-green-bg); }
-.scientific-article-card.sac-type-lime { --sac-type-fg: var(--sac-lime-fg); --sac-type-bg: var(--sac-lime-bg); }
-.scientific-article-card.sac-type-yellow { --sac-type-fg: var(--sac-yellow-fg); --sac-type-bg: var(--sac-yellow-bg); }
-.scientific-article-card.sac-type-orange { --sac-type-fg: var(--sac-orange-fg); --sac-type-bg: var(--sac-orange-bg); }
-.scientific-article-card.sac-type-red { --sac-type-fg: var(--sac-red-fg); --sac-type-bg: var(--sac-red-bg); }
-.scientific-article-card.sac-type-pink { --sac-type-fg: var(--sac-pink-fg); --sac-type-bg: var(--sac-pink-bg); }
-.scientific-article-card.sac-type-grape { --sac-type-fg: var(--sac-grape-fg); --sac-type-bg: var(--sac-grape-bg); }
-.scientific-article-card.sac-type-violet { --sac-type-fg: var(--sac-violet-fg); --sac-type-bg: var(--sac-violet-bg); }
-.scientific-article-card.sac-type-indigo { --sac-type-fg: var(--sac-indigo-fg); --sac-type-bg: var(--sac-indigo-bg); }
-.scientific-article-card.sac-type-gray { --sac-type-fg: var(--sac-gray-fg); --sac-type-bg: var(--sac-gray-bg); }
-.scientific-article-card.sac-type-accent { --sac-type-fg: var(--text-accent); --sac-type-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent); }
-.scientific-article-card.sac-kw-blue { --sac-kw-fg: var(--sac-blue-fg); --sac-kw-bg: var(--sac-blue-bg); }
-.scientific-article-card.sac-kw-cyan { --sac-kw-fg: var(--sac-cyan-fg); --sac-kw-bg: var(--sac-cyan-bg); }
-.scientific-article-card.sac-kw-teal { --sac-kw-fg: var(--sac-teal-fg); --sac-kw-bg: var(--sac-teal-bg); }
-.scientific-article-card.sac-kw-green { --sac-kw-fg: var(--sac-green-fg); --sac-kw-bg: var(--sac-green-bg); }
-.scientific-article-card.sac-kw-lime { --sac-kw-fg: var(--sac-lime-fg); --sac-kw-bg: var(--sac-lime-bg); }
-.scientific-article-card.sac-kw-yellow { --sac-kw-fg: var(--sac-yellow-fg); --sac-kw-bg: var(--sac-yellow-bg); }
-.scientific-article-card.sac-kw-orange { --sac-kw-fg: var(--sac-orange-fg); --sac-kw-bg: var(--sac-orange-bg); }
-.scientific-article-card.sac-kw-red { --sac-kw-fg: var(--sac-red-fg); --sac-kw-bg: var(--sac-red-bg); }
-.scientific-article-card.sac-kw-pink { --sac-kw-fg: var(--sac-pink-fg); --sac-kw-bg: var(--sac-pink-bg); }
-.scientific-article-card.sac-kw-grape { --sac-kw-fg: var(--sac-grape-fg); --sac-kw-bg: var(--sac-grape-bg); }
-.scientific-article-card.sac-kw-violet { --sac-kw-fg: var(--sac-violet-fg); --sac-kw-bg: var(--sac-violet-bg); }
-.scientific-article-card.sac-kw-indigo { --sac-kw-fg: var(--sac-indigo-fg); --sac-kw-bg: var(--sac-indigo-bg); }
-.scientific-article-card.sac-kw-gray { --sac-kw-fg: var(--sac-gray-fg); --sac-kw-bg: var(--sac-gray-bg); }
-.scientific-article-card.sac-kw-accent { --sac-kw-fg: var(--text-accent); --sac-kw-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent); }
-.scientific-article-card.sac-tag-blue { --sac-tag-fg: var(--sac-blue-fg); --sac-tag-bg: var(--sac-blue-bg); }
-.scientific-article-card.sac-tag-cyan { --sac-tag-fg: var(--sac-cyan-fg); --sac-tag-bg: var(--sac-cyan-bg); }
-.scientific-article-card.sac-tag-teal { --sac-tag-fg: var(--sac-teal-fg); --sac-tag-bg: var(--sac-teal-bg); }
-.scientific-article-card.sac-tag-green { --sac-tag-fg: var(--sac-green-fg); --sac-tag-bg: var(--sac-green-bg); }
-.scientific-article-card.sac-tag-lime { --sac-tag-fg: var(--sac-lime-fg); --sac-tag-bg: var(--sac-lime-bg); }
-.scientific-article-card.sac-tag-yellow { --sac-tag-fg: var(--sac-yellow-fg); --sac-tag-bg: var(--sac-yellow-bg); }
-.scientific-article-card.sac-tag-orange { --sac-tag-fg: var(--sac-orange-fg); --sac-tag-bg: var(--sac-orange-bg); }
-.scientific-article-card.sac-tag-red { --sac-tag-fg: var(--sac-red-fg); --sac-tag-bg: var(--sac-red-bg); }
-.scientific-article-card.sac-tag-pink { --sac-tag-fg: var(--sac-pink-fg); --sac-tag-bg: var(--sac-pink-bg); }
-.scientific-article-card.sac-tag-grape { --sac-tag-fg: var(--sac-grape-fg); --sac-tag-bg: var(--sac-grape-bg); }
-.scientific-article-card.sac-tag-violet { --sac-tag-fg: var(--sac-violet-fg); --sac-tag-bg: var(--sac-violet-bg); }
-.scientific-article-card.sac-tag-indigo { --sac-tag-fg: var(--sac-indigo-fg); --sac-tag-bg: var(--sac-indigo-bg); }
-.scientific-article-card.sac-tag-gray { --sac-tag-fg: var(--sac-gray-fg); --sac-tag-bg: var(--sac-gray-bg); }
-.scientific-article-card.sac-tag-accent { --sac-tag-fg: var(--text-accent); --sac-tag-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent); }
+.scientific-article-card.sac-type-blue { --sac-type-fg: var(--sac-blue-fg); --sac-type-bg: var(--sac-blue-bg); --sac-type-solid: var(--sac-blue-solid); }
+.scientific-article-card.sac-type-cyan { --sac-type-fg: var(--sac-cyan-fg); --sac-type-bg: var(--sac-cyan-bg); --sac-type-solid: var(--sac-cyan-solid); }
+.scientific-article-card.sac-type-teal { --sac-type-fg: var(--sac-teal-fg); --sac-type-bg: var(--sac-teal-bg); --sac-type-solid: var(--sac-teal-solid); }
+.scientific-article-card.sac-type-green { --sac-type-fg: var(--sac-green-fg); --sac-type-bg: var(--sac-green-bg); --sac-type-solid: var(--sac-green-solid); }
+.scientific-article-card.sac-type-lime { --sac-type-fg: var(--sac-lime-fg); --sac-type-bg: var(--sac-lime-bg); --sac-type-solid: var(--sac-lime-solid); }
+.scientific-article-card.sac-type-yellow { --sac-type-fg: var(--sac-yellow-fg); --sac-type-bg: var(--sac-yellow-bg); --sac-type-solid: var(--sac-yellow-solid); }
+.scientific-article-card.sac-type-orange { --sac-type-fg: var(--sac-orange-fg); --sac-type-bg: var(--sac-orange-bg); --sac-type-solid: var(--sac-orange-solid); }
+.scientific-article-card.sac-type-red { --sac-type-fg: var(--sac-red-fg); --sac-type-bg: var(--sac-red-bg); --sac-type-solid: var(--sac-red-solid); }
+.scientific-article-card.sac-type-pink { --sac-type-fg: var(--sac-pink-fg); --sac-type-bg: var(--sac-pink-bg); --sac-type-solid: var(--sac-pink-solid); }
+.scientific-article-card.sac-type-grape { --sac-type-fg: var(--sac-grape-fg); --sac-type-bg: var(--sac-grape-bg); --sac-type-solid: var(--sac-grape-solid); }
+.scientific-article-card.sac-type-violet { --sac-type-fg: var(--sac-violet-fg); --sac-type-bg: var(--sac-violet-bg); --sac-type-solid: var(--sac-violet-solid); }
+.scientific-article-card.sac-type-indigo { --sac-type-fg: var(--sac-indigo-fg); --sac-type-bg: var(--sac-indigo-bg); --sac-type-solid: var(--sac-indigo-solid); }
+.scientific-article-card.sac-type-gray { --sac-type-fg: var(--sac-gray-fg); --sac-type-bg: var(--sac-gray-bg); --sac-type-solid: var(--sac-gray-solid); }
+.scientific-article-card.sac-type-accent { --sac-type-fg: var(--text-accent); --sac-type-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent); --sac-type-solid: var(--interactive-accent); }
+.scientific-article-card.sac-kw-blue { --sac-kw-fg: var(--sac-blue-fg); --sac-kw-bg: var(--sac-blue-bg); --sac-kw-solid: var(--sac-blue-solid); }
+.scientific-article-card.sac-kw-cyan { --sac-kw-fg: var(--sac-cyan-fg); --sac-kw-bg: var(--sac-cyan-bg); --sac-kw-solid: var(--sac-cyan-solid); }
+.scientific-article-card.sac-kw-teal { --sac-kw-fg: var(--sac-teal-fg); --sac-kw-bg: var(--sac-teal-bg); --sac-kw-solid: var(--sac-teal-solid); }
+.scientific-article-card.sac-kw-green { --sac-kw-fg: var(--sac-green-fg); --sac-kw-bg: var(--sac-green-bg); --sac-kw-solid: var(--sac-green-solid); }
+.scientific-article-card.sac-kw-lime { --sac-kw-fg: var(--sac-lime-fg); --sac-kw-bg: var(--sac-lime-bg); --sac-kw-solid: var(--sac-lime-solid); }
+.scientific-article-card.sac-kw-yellow { --sac-kw-fg: var(--sac-yellow-fg); --sac-kw-bg: var(--sac-yellow-bg); --sac-kw-solid: var(--sac-yellow-solid); }
+.scientific-article-card.sac-kw-orange { --sac-kw-fg: var(--sac-orange-fg); --sac-kw-bg: var(--sac-orange-bg); --sac-kw-solid: var(--sac-orange-solid); }
+.scientific-article-card.sac-kw-red { --sac-kw-fg: var(--sac-red-fg); --sac-kw-bg: var(--sac-red-bg); --sac-kw-solid: var(--sac-red-solid); }
+.scientific-article-card.sac-kw-pink { --sac-kw-fg: var(--sac-pink-fg); --sac-kw-bg: var(--sac-pink-bg); --sac-kw-solid: var(--sac-pink-solid); }
+.scientific-article-card.sac-kw-grape { --sac-kw-fg: var(--sac-grape-fg); --sac-kw-bg: var(--sac-grape-bg); --sac-kw-solid: var(--sac-grape-solid); }
+.scientific-article-card.sac-kw-violet { --sac-kw-fg: var(--sac-violet-fg); --sac-kw-bg: var(--sac-violet-bg); --sac-kw-solid: var(--sac-violet-solid); }
+.scientific-article-card.sac-kw-indigo { --sac-kw-fg: var(--sac-indigo-fg); --sac-kw-bg: var(--sac-indigo-bg); --sac-kw-solid: var(--sac-indigo-solid); }
+.scientific-article-card.sac-kw-gray { --sac-kw-fg: var(--sac-gray-fg); --sac-kw-bg: var(--sac-gray-bg); --sac-kw-solid: var(--sac-gray-solid); }
+.scientific-article-card.sac-kw-accent { --sac-kw-fg: var(--text-accent); --sac-kw-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent); --sac-kw-solid: var(--interactive-accent); }
+.scientific-article-card.sac-tag-blue { --sac-tag-fg: var(--sac-blue-fg); --sac-tag-bg: var(--sac-blue-bg); --sac-tag-solid: var(--sac-blue-solid); }
+.scientific-article-card.sac-tag-cyan { --sac-tag-fg: var(--sac-cyan-fg); --sac-tag-bg: var(--sac-cyan-bg); --sac-tag-solid: var(--sac-cyan-solid); }
+.scientific-article-card.sac-tag-teal { --sac-tag-fg: var(--sac-teal-fg); --sac-tag-bg: var(--sac-teal-bg); --sac-tag-solid: var(--sac-teal-solid); }
+.scientific-article-card.sac-tag-green { --sac-tag-fg: var(--sac-green-fg); --sac-tag-bg: var(--sac-green-bg); --sac-tag-solid: var(--sac-green-solid); }
+.scientific-article-card.sac-tag-lime { --sac-tag-fg: var(--sac-lime-fg); --sac-tag-bg: var(--sac-lime-bg); --sac-tag-solid: var(--sac-lime-solid); }
+.scientific-article-card.sac-tag-yellow { --sac-tag-fg: var(--sac-yellow-fg); --sac-tag-bg: var(--sac-yellow-bg); --sac-tag-solid: var(--sac-yellow-solid); }
+.scientific-article-card.sac-tag-orange { --sac-tag-fg: var(--sac-orange-fg); --sac-tag-bg: var(--sac-orange-bg); --sac-tag-solid: var(--sac-orange-solid); }
+.scientific-article-card.sac-tag-red { --sac-tag-fg: var(--sac-red-fg); --sac-tag-bg: var(--sac-red-bg); --sac-tag-solid: var(--sac-red-solid); }
+.scientific-article-card.sac-tag-pink { --sac-tag-fg: var(--sac-pink-fg); --sac-tag-bg: var(--sac-pink-bg); --sac-tag-solid: var(--sac-pink-solid); }
+.scientific-article-card.sac-tag-grape { --sac-tag-fg: var(--sac-grape-fg); --sac-tag-bg: var(--sac-grape-bg); --sac-tag-solid: var(--sac-grape-solid); }
+.scientific-article-card.sac-tag-violet { --sac-tag-fg: var(--sac-violet-fg); --sac-tag-bg: var(--sac-violet-bg); --sac-tag-solid: var(--sac-violet-solid); }
+.scientific-article-card.sac-tag-indigo { --sac-tag-fg: var(--sac-indigo-fg); --sac-tag-bg: var(--sac-indigo-bg); --sac-tag-solid: var(--sac-indigo-solid); }
+.scientific-article-card.sac-tag-gray { --sac-tag-fg: var(--sac-gray-fg); --sac-tag-bg: var(--sac-gray-bg); --sac-tag-solid: var(--sac-gray-solid); }
+.scientific-article-card.sac-tag-accent { --sac-tag-fg: var(--text-accent); --sac-tag-bg: color-mix(in srgb, var(--interactive-accent) 15%, transparent); --sac-tag-solid: var(--interactive-accent); }
 
 .scientific-article-card-main {
 	display: flex;
@@ -192,20 +208,164 @@
 	border-radius: 2px;
 }
 
-/* Badge variant="light" size="sm" */
+/*
+ * Badges (Mantine Badge): the publication type, keywords, tags and status share one style. Colors come
+ * from each badge's role; variant, size, radius and case from the settings (sac-badge-*, sac-tt-* classes).
+ */
+.scientific-article-card {
+	--sac-badge-h: 20px;
+	--sac-badge-px: 9px;
+	--sac-badge-fs: 12px;
+	--sac-badge-radius: 32px;
+}
+
 .scientific-article-card-badge {
+	--b-fg: var(--sac-type-fg);
+	--b-bg: var(--sac-type-bg);
+	--b-solid: var(--sac-type-solid);
+}
+
+.scientific-article-card-keyword {
+	--b-fg: var(--sac-kw-fg);
+	--b-bg: var(--sac-kw-bg);
+	--b-solid: var(--sac-kw-solid);
+}
+
+.scientific-article-card-tag {
+	--b-fg: var(--sac-tag-fg);
+	--b-bg: var(--sac-tag-bg);
+	--b-solid: var(--sac-tag-solid);
+}
+
+.scientific-article-card-status {
+	--b-fg: var(--sac-gray-fg);
+	--b-bg: var(--sac-gray-bg);
+	--b-solid: var(--sac-gray-solid);
+}
+
+.scientific-article-card-status.is-to-read {
+	--b-fg: var(--sac-orange-fg);
+	--b-bg: var(--sac-orange-bg);
+	--b-solid: var(--sac-orange-solid);
+}
+
+.scientific-article-card-status.is-reading {
+	--b-fg: var(--sac-blue-fg);
+	--b-bg: var(--sac-blue-bg);
+	--b-solid: var(--sac-blue-solid);
+}
+
+.scientific-article-card-status.is-read {
+	--b-fg: var(--sac-green-fg);
+	--b-bg: var(--sac-green-bg);
+	--b-solid: var(--sac-green-solid);
+}
+
+.scientific-article-card-badge,
+.scientific-article-card-keyword,
+.scientific-article-card-tag,
+.scientific-article-card-status {
 	display: inline-flex;
 	align-items: center;
-	height: 18px;
-	padding: 0 8px;
-	border-radius: var(--sac-radius-xl);
-	background: var(--sac-type-bg);
-	color: var(--sac-type-fg);
-	font-size: 10px;
+	gap: 5px;
+	box-sizing: border-box;
+	height: var(--sac-badge-h);
+	padding: 0 var(--sac-badge-px);
+	border: 1px solid transparent;
+	border-radius: var(--sac-badge-radius);
+	background: var(--b-bg);
+	color: var(--b-fg);
+	font-size: var(--sac-badge-fs);
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+/* variant (light is the default above) */
+.sac-badge-filled :is(.scientific-article-card-badge, .scientific-article-card-keyword, .scientific-article-card-tag, .scientific-article-card-status) {
+	background: var(--b-solid);
+	color: #ffffff;
+}
+
+.sac-badge-outline :is(.scientific-article-card-badge, .scientific-article-card-keyword, .scientific-article-card-tag, .scientific-article-card-status) {
+	background: transparent;
+	border-color: currentColor;
+}
+
+.sac-badge-default :is(.scientific-article-card-badge, .scientific-article-card-keyword, .scientific-article-card-tag, .scientific-article-card-status),
+.sac-badge-dot :is(.scientific-article-card-badge, .scientific-article-card-keyword, .scientific-article-card-tag, .scientific-article-card-status) {
+	background: var(--sac-body);
+	border-color: var(--sac-border);
+	color: var(--sac-text);
+}
+
+.sac-badge-dot :is(.scientific-article-card-badge, .scientific-article-card-keyword, .scientific-article-card-tag, .scientific-article-card-status)::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--b-solid);
+}
+
+/* size */
+.scientific-article-card.sac-badge-size-xs { --sac-badge-h: 16px; --sac-badge-px: 6px; --sac-badge-fs: 10px; }
+.scientific-article-card.sac-badge-size-sm { --sac-badge-h: 18px; --sac-badge-px: 8px; --sac-badge-fs: 11px; }
+.scientific-article-card.sac-badge-size-md { --sac-badge-h: 20px; --sac-badge-px: 9px; --sac-badge-fs: 12px; }
+.scientific-article-card.sac-badge-size-lg { --sac-badge-h: 24px; --sac-badge-px: 11px; --sac-badge-fs: 13px; }
+.scientific-article-card.sac-badge-size-xl { --sac-badge-h: 28px; --sac-badge-px: 13px; --sac-badge-fs: 14px; }
+
+/* radius */
+.scientific-article-card.sac-badge-radius-xs { --sac-badge-radius: 2px; }
+.scientific-article-card.sac-badge-radius-sm { --sac-badge-radius: 4px; }
+.scientific-article-card.sac-badge-radius-md { --sac-badge-radius: 8px; }
+.scientific-article-card.sac-badge-radius-lg { --sac-badge-radius: 16px; }
+.scientific-article-card.sac-badge-radius-xl { --sac-badge-radius: 32px; }
+
+/* case: uppercase for the publication type only, for all badges, or none */
+.sac-tt-type .scientific-article-card-badge,
+.sac-tt-all :is(.scientific-article-card-badge, .scientific-article-card-keyword, .scientific-article-card-tag, .scientific-article-card-status) {
+	font-size: calc(var(--sac-badge-fs) - 2px);
 	font-weight: 700;
 	letter-spacing: 0.25px;
 	text-transform: uppercase;
-	white-space: nowrap;
+}
+
+/* Collapsible keywords and summary */
+.scientific-article-card-toggle {
+	margin-top: 12px;
+}
+
+.scientific-article-card-toggle > summary {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+	list-style: none;
+	color: var(--sac-dimmed);
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.scientific-article-card-toggle > summary::-webkit-details-marker {
+	display: none;
+}
+
+.scientific-article-card-toggle > summary::before {
+	content: "";
+	width: 5px;
+	height: 5px;
+	border-right: 1.5px solid currentColor;
+	border-bottom: 1.5px solid currentColor;
+	transform: rotate(-45deg);
+	transition: transform 150ms ease;
+}
+
+.scientific-article-card-toggle[open] > summary::before {
+	transform: rotate(45deg);
+}
+
+.scientific-article-card-toggle > summary:hover {
+	color: var(--sac-text);
 }
 
 /* Text fw={600} size="lg" */
@@ -288,30 +448,12 @@
 	object-fit: cover;
 }
 
-/* Group of Badge variant="light" color="violet" tt="none" */
+/* Keywords (Badge group, violet by default) */
 .scientific-article-card-keywords {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
-	margin-top: 14px;
-}
-
-.scientific-article-card-keyword,
-.scientific-article-card-tag,
-.scientific-article-card-status {
-	display: inline-flex;
-	align-items: center;
-	height: 20px;
-	padding: 0 9px;
-	border-radius: var(--sac-radius-xl);
-	font-size: 12px;
-	font-weight: 500;
-	white-space: nowrap;
-}
-
-.scientific-article-card-keyword {
-	background: var(--sac-kw-bg);
-	color: var(--sac-kw-fg);
+	margin-top: 8px;
 }
 
 /* ActionIcon variant="subtle" buttons in the header */
@@ -410,52 +552,44 @@
 	font-size: 12px;
 }
 
-.scientific-article-card-status {
-	background: var(--sac-gray-bg);
-	color: var(--sac-gray-fg);
-}
-
-.scientific-article-card-status.is-to-read {
-	background: var(--sac-orange-bg);
-	color: var(--sac-orange-fg);
-}
-
-.scientific-article-card-status.is-reading {
-	background: var(--sac-blue-bg);
-	color: var(--sac-blue-fg);
-}
-
-.scientific-article-card-status.is-read {
-	background: var(--sac-green-bg);
-	color: var(--sac-green-fg);
-}
-
 .scientific-article-card-rating {
 	color: var(--sac-star);
 	font-size: 15px;
 	letter-spacing: 1px;
 }
 
-.scientific-article-card-tag {
-	background: var(--sac-tag-bg);
-	color: var(--sac-tag-fg);
-}
-
 .scientific-article-card-note {
-	margin: 10px 0 10px;
+	margin: 8px 0 10px;
 	padding: 2px 0 2px 12px;
 	border-left: 3px solid var(--sac-tag-fg);
 	color: var(--sac-text);
 	font-size: 14px;
-	white-space: pre-line;
+}
+
+.scientific-article-card-note > :first-child {
+	margin-top: 0;
+}
+
+.scientific-article-card-note > :last-child {
+	margin-bottom: 0;
 }
 
 .scientific-article-card-note p {
 	margin: 0 0 6px;
 }
 
-.scientific-article-card-note p:last-child {
-	margin-bottom: 0;
+.scientific-article-card-note p.is-plain {
+	white-space: pre-line;
+}
+
+.scientific-article-card-note ul,
+.scientific-article-card-note ol {
+	margin: 4px 0;
+	padding-left: 20px;
+}
+
+.scientific-article-card-summary {
+	margin: 10px 0 0;
 }
 
 .scientific-article-card-note-input {

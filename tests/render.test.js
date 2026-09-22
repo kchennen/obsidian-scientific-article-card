@@ -36,15 +36,16 @@ test("card structure: header, title link, citation, identifiers, image, keywords
 	assert.deepEqual(q(el, ".scientific-article-card-id-label"), ["DOI", "PMID", "PMC"]);
 	assert.equal(el.querySelector(".scientific-article-card-thumb img").getAttribute("src"), data.image);
 	assert.deepEqual(q(el, ".scientific-article-card-keyword"), ["Deep Learning", "Proteins"]);
+	assert.deepEqual(q(el, ".scientific-article-card-toggle.is-keywords > summary"), ["Keywords (2)"]);
 	assert.deepEqual(q(el, ".scientific-article-card-abstract strong"), ["Background: ", "Results: "]);
-	assert.equal(el.querySelector("details").hasAttribute("open"), false);
+	assert.equal(el.querySelector(".scientific-article-card-abstract").hasAttribute("open"), false);
 	assert.equal(el.querySelector(".scientific-article-card-mine"), null); // no notes -> no section
 });
 
 test("abstract open by default when the setting is on", () => {
 	const el = mount();
 	I.renderCardData(data, el, Object.assign({}, S, { abstractOpen: true }), {});
-	assert.ok(el.querySelector("details").hasAttribute("open"));
+	assert.ok(el.querySelector(".scientific-article-card-abstract").hasAttribute("open"));
 });
 
 test("errors: invalid YAML, no title or URL", () => {
@@ -89,6 +90,57 @@ test("linked card: shows the paper note's values, names the note, labelled butto
 test("color settings become classes on the card", () => {
 	const el = mount();
 	const card = I.renderCardData(data, el, Object.assign({}, S, { cardStyle: "obsidian", typeColor: "red", keywordColor: "accent", tagColor: "nope" }), {});
-	assert.deepEqual([...card.classList].filter((c) => c.startsWith("sac-")), ["sac-surface-obsidian", "sac-type-red", "sac-kw-accent", "sac-tag-teal"]);
-	assert.deepEqual(I.colorClasses(S), ["sac-surface-mantine", "sac-type-blue", "sac-kw-violet", "sac-tag-teal"]);
+	assert.deepEqual([...card.classList].filter((c) => c.startsWith("sac-")).slice(0, 4), ["sac-surface-obsidian", "sac-type-red", "sac-kw-accent", "sac-tag-teal"]);
+	assert.deepEqual(I.colorClasses(S), [
+		"sac-surface-mantine",
+		"sac-type-blue",
+		"sac-kw-violet",
+		"sac-tag-teal",
+		"sac-badge-light",
+		"sac-badge-size-md",
+		"sac-badge-radius-xl",
+		"sac-tt-type",
+	]);
+});
+
+test("badge settings become classes; invalid values fall back to the defaults", () => {
+	const cls = I.colorClasses(Object.assign({}, S, { badgeVariant: "dot", badgeSize: "lg", badgeRadius: "sm", badgeUppercase: "none" }));
+	assert.deepEqual(cls.slice(4), ["sac-badge-dot", "sac-badge-size-lg", "sac-badge-radius-sm", "sac-tt-none"]);
+	const bad = I.colorClasses(Object.assign({}, S, { badgeVariant: "x", badgeSize: "huge", badgeRadius: "", badgeUppercase: 1 }));
+	assert.deepEqual(bad.slice(4), ["sac-badge-light", "sac-badge-size-md", "sac-badge-radius-xl", "sac-tt-type"]);
+});
+
+test("keywords and summary: collapsible, open state from the settings", () => {
+	const withNote = Object.assign({}, data, { note: "Hello" });
+	const el = mount();
+	I.renderCardData(withNote, el, Object.assign({}, S, { keywordsOpen: false, summaryOpen: false }), {});
+	assert.equal(el.querySelector(".is-keywords").hasAttribute("open"), false);
+	assert.equal(el.querySelector(".is-summary").hasAttribute("open"), false);
+	assert.deepEqual(q(el, ".is-summary > summary"), ["Note"]);
+	const el2 = mount();
+	I.renderCardData(withNote, el2, S, { user: { note: "From note" } });
+	assert.ok(el2.querySelector(".is-keywords").hasAttribute("open"));
+	assert.ok(el2.querySelector(".is-summary").hasAttribute("open"));
+	assert.deepEqual(q(el2, ".is-summary > summary"), ["Summary"]);
+});
+
+test("changing the settings updates rendered cards (classes and open sections)", () => {
+	const el = mount();
+	const card = I.renderCardData(Object.assign({}, data, { note: "x" }), el, S, {});
+	I.applyColorClasses(card, Object.assign({}, S, { badgeVariant: "outline", keywordsOpen: false, summaryOpen: false }));
+	assert.ok(card.classList.contains("sac-badge-outline"));
+	assert.equal(card.querySelector(".is-keywords").hasAttribute("open"), false);
+	assert.equal(card.querySelector(".is-summary").hasAttribute("open"), false);
+});
+
+test("summary as Markdown when a renderer is given, plain text otherwise", () => {
+	const md = "summary paper note\n- dfg\n - dfg";
+	const el = mount();
+	const seen = [];
+	I.renderCardData(Object.assign({}, data), el, S, { user: { note: md }, renderMarkdown: (m, target) => { seen.push(m); target.createEl("ul"); } });
+	assert.deepEqual(seen, [md]);
+	assert.ok(el.querySelector(".scientific-article-card-note ul"));
+	const el2 = mount();
+	I.renderCardData(Object.assign({}, data, { note: md }), el2, S, {});
+	assert.deepEqual(q(el2, ".scientific-article-card-note p.is-plain"), [md]);
 });

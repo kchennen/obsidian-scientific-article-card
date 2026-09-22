@@ -1,7 +1,7 @@
 {
 	"id": "scientific-article-card",
 	"name": "Scientific Article Card",
-	"version": "1.10.0",
+	"version": "1.11.0",
 	"minAppVersion": "1.4.0",
 	"description": "Turn a PMID, PMCID, DOI, arXiv ID or article URL into a metadata card with title, authors, journal, abstract, image and identifiers.",
 	"author": "Kirsley Chennen",

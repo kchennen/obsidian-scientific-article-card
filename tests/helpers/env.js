@@ -49,6 +49,7 @@ H.empty = function () {
 };
 
 const notices = [];
+const markdownCalls = [];
 let lastModal = null;
 let network = async () => {
 	throw new Error("network not configured");
@@ -139,6 +140,17 @@ const obsidianStub = {
 		return n || "/";
 	},
 	setIcon: (el, name) => el.setAttribute("data-icon", name),
+	MarkdownRenderer: {
+		render: async (app, markdown, el, sourcePath, component) => {
+			markdownCalls.push({ markdown, sourcePath, component: !!component });
+			const ul = markdown.split("\n").filter((l) => /^\s*- /.test(l));
+			if (ul.length) {
+				const list = el.createEl("ul");
+				for (const l of ul) list.createEl("li", { text: l.replace(/^\s*- /, "") });
+			}
+			for (const l of markdown.split("\n").filter((l) => l.trim() && !/^\s*- /.test(l))) el.createEl("p", { text: l });
+		},
+	},
 	requestUrl: (req) => network(req),
 };
 
@@ -161,6 +173,7 @@ module.exports = {
 	TFile,
 	editorInfoField,
 	notices,
+	markdownCalls,
 	lastModal: () => lastModal,
 	setNetwork(fn) {
 		network = fn;

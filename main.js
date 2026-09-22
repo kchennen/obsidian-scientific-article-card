@@ -21,12 +21,16 @@ const {
 	setIcon,
 	TFile,
 	MarkdownRenderChild,
+	MarkdownRenderer,
 	normalizePath,
 } = obsidian;
 const { EditorView } = require("@codemirror/view");
 
 const CODE_BLOCK_LANG = "paper";
 const PAPER_NOTE_LANG = "paper-note";
+const BADGE_VARIANTS = ["light", "filled", "outline", "dot", "default"];
+const SIZES = ["xs", "sm", "md", "lg", "xl"];
+const UPPERCASE = ["type", "all", "none"];
 const COLORS = ["blue", "cyan", "teal", "green", "lime", "yellow", "orange", "red", "pink", "grape", "violet", "indigo", "gray", "accent"];
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const EUROPEPMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search";
@@ -73,6 +77,12 @@ const DEFAULT_SETTINGS = {
 	typeColor: "blue",
 	keywordColor: "violet",
 	tagColor: "teal",
+	badgeVariant: "light", // Mantine Badge variant: light | filled | outline | dot | default
+	badgeSize: "md", // xs | sm | md | lg | xl
+	badgeRadius: "xl", // xs | sm | md | lg | xl
+	badgeUppercase: "type", // type (publication type only) | all | none
+	keywordsOpen: true,
+	summaryOpen: true,
 	showInMenu: true,
 	email: "",
 	ncbiApiKey: "",
@@ -1173,18 +1183,31 @@ function linkpathFrom(v) {
 }
 
 function colorClasses(settings) {
-	const pick = (c, dflt) => (COLORS.includes(c) ? c : dflt);
+	const pick = (list, v, dflt) => (list.includes(v) ? v : dflt);
 	return [
 		`sac-surface-${settings.cardStyle === "obsidian" ? "obsidian" : "mantine"}`,
-		`sac-type-${pick(settings.typeColor, "blue")}`,
-		`sac-kw-${pick(settings.keywordColor, "violet")}`,
-		`sac-tag-${pick(settings.tagColor, "teal")}`,
+		`sac-type-${pick(COLORS, settings.typeColor, "blue")}`,
+		`sac-kw-${pick(COLORS, settings.keywordColor, "violet")}`,
+		`sac-tag-${pick(COLORS, settings.tagColor, "teal")}`,
+		`sac-badge-${pick(BADGE_VARIANTS, settings.badgeVariant, "light")}`,
+		`sac-badge-size-${pick(SIZES, settings.badgeSize, "md")}`,
+		`sac-badge-radius-${pick(SIZES, settings.badgeRadius, "xl")}`,
+		`sac-tt-${pick(UPPERCASE, settings.badgeUppercase, "type")}`,
 	];
 }
 
+/** Re-apply the appearance settings to a rendered card: color/badge classes and default open sections. */
 function applyColorClasses(card, settings) {
 	for (const c of Array.from(card.classList)) if (c.startsWith("sac-")) card.classList.remove(c);
 	card.classList.add(...colorClasses(settings));
+	const setOpen = (sel, open) => {
+		for (const d of Array.from(card.querySelectorAll(sel))) {
+			if (open) d.setAttribute("open", "");
+			else d.removeAttribute("open");
+		}
+	};
+	setOpen(".scientific-article-card-toggle.is-keywords", settings.keywordsOpen !== false);
+	setOpen(".scientific-article-card-toggle.is-summary", settings.summaryOpen !== false);
 }
 
 function renderCard(source, el, settings, actions) {
@@ -1199,7 +1222,8 @@ function renderCard(source, el, settings, actions) {
 }
 
 /**
- * actions: { onEdit(), note: { label, icon, onClick() }, user: { status, rating, tags, note }, userSource }
+ * actions: { onEdit(), note: { label, icon, onClick() }, user: { status, rating, tags, note }, userSource,
+ *            renderMarkdown(markdown, el) }   (without renderMarkdown, the note is shown as plain text)
  * `user` overrides the card's own notes fields (used when the card is linked to a paper note, named `userSource`).
  */
 function renderCardData(data, el, settings, actions) {
@@ -1279,9 +1303,13 @@ function renderCardData(data, el, settings, actions) {
 		img.onerror = () => thumb.remove();
 	}
 
-	if (d.keywords) {
-		const kw = card.createDiv({ cls: "scientific-article-card-keywords" });
-		for (const k of d.keywords.split(/\s*;\s*/).filter(Boolean)) kw.createSpan({ cls: "scientific-article-card-keyword", text: k });
+	const keywords = d.keywords ? d.keywords.split(/\s*;\s*/).filter(Boolean) : [];
+	if (keywords.length) {
+		const det = card.createEl("details", { cls: "scientific-article-card-toggle is-keywords" });
+		if (settings.keywordsOpen !== false) det.setAttr("open", "");
+		det.createEl("summary", { text: `Keywords (${keywords.length})` });
+		const kw = det.createDiv({ cls: "scientific-article-card-keywords" });
+		for (const k of keywords) kw.createSpan({ cls: "scientific-article-card-keyword", text: k });
 	}
 
 	const rating = u.rating;
@@ -1303,8 +1331,12 @@ function renderCardData(data, el, settings, actions) {
 		}
 		for (const t of userTags) row.createSpan({ cls: "scientific-article-card-tag", text: "#" + t });
 		if (u.note) {
-			const note = mine.createDiv({ cls: "scientific-article-card-note" });
-			for (const para of u.note.split(/\n{2,}/)) note.createEl("p", { text: para });
+			const det = mine.createEl("details", { cls: "scientific-article-card-toggle is-summary" });
+			if (settings.summaryOpen !== false) det.setAttr("open", "");
+			det.createEl("summary", { text: a.user ? "Summary" : "Note" });
+			const note = det.createDiv({ cls: "scientific-article-card-note" });
+			if (a.renderMarkdown) a.renderMarkdown(u.note, note);
+			else for (const para of u.note.split(/\n{2,}/)) note.createEl("p", { cls: "is-plain", text: para });
 		}
 	}
 
@@ -1431,7 +1463,7 @@ class CardRenderChild extends MarkdownRenderChild {
 	}
 	update() {
 		this.containerEl.empty();
-		this.watchPath = this.render(this.containerEl) || null;
+		this.watchPath = this.render(this.containerEl, this) || null;
 	}
 }
 
@@ -1447,10 +1479,10 @@ class ScientificArticleCardPlugin extends Plugin {
 		this.creating = new Set(); // DOI/PMID keys of paper notes being created (double clicks)
 		this.recentNotes = new Map(); // DOI/PMID -> paper note created before the metadata cache has indexed it
 		this.registerMarkdownCodeBlockProcessor(CODE_BLOCK_LANG, (source, el, ctx) => {
-			ctx.addChild(new CardRenderChild(el, this, (target) => this.renderPaperBlock(source, target, ctx, el)));
+			ctx.addChild(new CardRenderChild(el, this, (target, component) => this.renderPaperBlock(source, target, ctx, el, component)));
 		});
 		this.registerMarkdownCodeBlockProcessor(PAPER_NOTE_LANG, (source, el, ctx) => {
-			ctx.addChild(new CardRenderChild(el, this, (target) => this.renderPaperNoteBlock(target, ctx)));
+			ctx.addChild(new CardRenderChild(el, this, (target, component) => this.renderPaperNoteBlock(target, ctx, component)));
 		});
 
 		this.addCommand({
@@ -1569,7 +1601,15 @@ class ScientificArticleCardPlugin extends Plugin {
 	}
 
 	/** A ```paper card. Returns the path of its linked paper note (watched for changes). */
-	renderPaperBlock(source, target, ctx, sectionEl) {
+	/** Markdown renderer for a card's note or summary (links, lists, emphasis…), bound to the card's lifecycle. */
+	markdownRenderer(sourcePath, component) {
+		if (!MarkdownRenderer || !component) return null;
+		return (markdown, el) => {
+			MarkdownRenderer.render(this.app, markdown, el, sourcePath, component);
+		};
+	}
+
+	renderPaperBlock(source, target, ctx, sectionEl, component) {
 		let d;
 		try {
 			d = parseYaml(source) || {};
@@ -1611,6 +1651,7 @@ class ScientificArticleCardPlugin extends Plugin {
 				onEdit: () => this.editNotes(source, sectionEl, ctx),
 			};
 		}
+		actions.renderMarkdown = this.markdownRenderer(ctx.sourcePath, component);
 		this.track(renderCardData(d, target, this.settings, actions));
 		return linked ? linked.path : null;
 	}
@@ -1655,7 +1696,7 @@ class ScientificArticleCardPlugin extends Plugin {
 	}
 
 	/** Legacy: paper notes made by versions 1.6–1.9 start with a ```paper-note block, still drawn from their properties. */
-	renderPaperNoteBlock(target, ctx) {
+	renderPaperNoteBlock(target, ctx, component) {
 		const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
 		const fm = file instanceof TFile ? (this.app.metadataCache.getFileCache(file) || {}).frontmatter : null;
 		if (!fm || (!fm.title && !fm.url)) {
@@ -1664,8 +1705,10 @@ class ScientificArticleCardPlugin extends Plugin {
 		}
 		this.track(
 			renderCardData(fmToCard(fm, this.settings), target, this.settings, {
+				user: { status: fm.status, rating: fm.rating, tags: fm.tags, note: fm.summary },
 				note: { label: "Refresh", icon: "refresh-cw", onClick: () => this.refreshPaperNote(file) },
 				onEdit: () => this.editProperties(file, fm.title),
+				renderMarkdown: this.markdownRenderer(ctx.sourcePath, component),
 			})
 		);
 		return ctx.sourcePath;
@@ -2190,6 +2233,19 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 		toggle("Include MeSH terms", "Always add MeSH terms, even when the article has author keywords.", "includeMesh");
 		toggle("Fetch preview image", "Load the publisher page to grab its og:image. Some publishers block this; it is skipped silently.", "fetchImage");
 		toggle("Expand abstract by default", "For the card view.", "abstractOpen");
+		const openToggle = (name, desc, key) =>
+			new Setting(containerEl)
+				.setName(name)
+				.setDesc(desc)
+				.addToggle((t) =>
+					t.setValue(s[key] !== false).onChange(async (v) => {
+						s[key] = v;
+						await save();
+						this.plugin.refreshColors();
+					})
+				);
+		openToggle("Expand keywords by default", "Show the keywords / MeSH terms, or only a “Keywords (n)” toggle.", "keywordsOpen");
+		openToggle("Expand summary by default", "Show your note or summary on the card, or only a toggle.", "summaryOpen");
 
 		new Setting(containerEl).setName("Colors").setHeading();
 		new Setting(containerEl)
@@ -2218,6 +2274,35 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 		colorSetting("Publication type color", "typeColor");
 		colorSetting("Keyword color", "keywordColor");
 		colorSetting("Tag and note color", "tagColor");
+
+		new Setting(containerEl).setName("Badges").setHeading();
+		const choice = (name, desc, key, options) =>
+			new Setting(containerEl)
+				.setName(name)
+				.setDesc(desc)
+				.addDropdown((dd) => {
+					for (const [value, label] of options) dd.addOption(value, label);
+					dd.setValue(s[key]).onChange(async (v) => {
+						s[key] = v;
+						await save();
+						this.plugin.refreshColors();
+					});
+				});
+		const sizes = [["xs", "Extra small"], ["sm", "Small"], ["md", "Medium"], ["lg", "Large"], ["xl", "Extra large"]];
+		choice("Variant", "Mantine Badge variant for the publication type, keywords, tags and status.", "badgeVariant", [
+			["light", "Light"],
+			["filled", "Filled"],
+			["outline", "Outline"],
+			["dot", "Dot"],
+			["default", "Default"],
+		]);
+		choice("Size", "", "badgeSize", sizes);
+		choice("Radius", "Corner rounding (Extra large is a pill).", "badgeRadius", sizes);
+		choice("Uppercase", "", "badgeUppercase", [
+			["type", "Publication type only"],
+			["all", "All badges"],
+			["none", "None"],
+		]);
 
 		new Setting(containerEl).setName("Paper notes").setHeading();
 		new Setting(containerEl)
@@ -2309,4 +2394,4 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 module.exports = ScientificArticleCardPlugin;
 module.exports.default = ScientificArticleCardPlugin;
 // exposed for testing
-module.exports._internals = { formatAuthors, citationLine, idLinks, COLORS, STATUSES, USER_KEYS, CODE_BLOCK_LANG, PAPER_NOTE_LANG, cardUserFields, mergeUserIntoProps, appendToNotesSection, refreshProps, papersBase, FETCHED_PROPS, parseTags, setFields, setUserFields, findBlock, renderCard, renderCardData, paperNoteBaseName, paperProps, paperNoteBody, fmToCard, cardToPaper, identFromCard, linkpathFrom, colorClasses, toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };
+module.exports._internals = { BADGE_VARIANTS, SIZES, UPPERCASE, applyColorClasses, formatAuthors, citationLine, idLinks, COLORS, STATUSES, USER_KEYS, CODE_BLOCK_LANG, PAPER_NOTE_LANG, cardUserFields, mergeUserIntoProps, appendToNotesSection, refreshProps, papersBase, FETCHED_PROPS, parseTags, setFields, setUserFields, findBlock, renderCard, renderCardData, paperNoteBaseName, paperProps, paperNoteBody, fmToCard, cardToPaper, identFromCard, linkpathFrom, colorClasses, toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };

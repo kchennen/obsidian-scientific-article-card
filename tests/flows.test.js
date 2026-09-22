@@ -258,3 +258,13 @@ test("color settings update cards already on screen", async () => {
 	plugin.refreshColors();
 	assert.ok(r.el.querySelector(".scientific-article-card").classList.contains("sac-kw-pink"));
 });
+
+test("cards render the summary through Obsidian's Markdown renderer", async () => {
+	const { vault, plugin, render } = await setup(`${card(ZUCCA)}\n`);
+	await plugin.createPaperNote({ ident: I.identFromCard(ZUCCA), card: ZUCCA, sourcePath: LIST, block: render("38520562").block });
+	await vault.app.fileManager.processFrontMatter(vault.file(`${DIR}/Zucca_HumGenet_2025.md`), (f) => (f.summary = "summary paper note\n- dfg\n - dfg"));
+	env.markdownCalls.length = 0;
+	const r = render("38520562");
+	assert.deepEqual(env.markdownCalls, [{ markdown: "summary paper note\n- dfg\n - dfg", sourcePath: LIST, component: true }]);
+	assert.deepEqual(texts(r.el, ".scientific-article-card-note li"), ["dfg", "dfg"]);
+});

@@ -32,6 +32,17 @@ test("every palette color has light and dark values, and a class for each role",
 test("layout guarantees: image on the left, narrow cards keep it and shrink it", () => {
 	assert.match(block(".scientific-article-card-thumb"), /order: -1/);
 	assert.match(css, /@container scientific-article-card \(max-width: 520px\)/);
-	assert.match(block(".scientific-article-card-keyword"), /background: var\(--sac-kw-bg\)/);
-	assert.doesNotMatch(block(".scientific-article-card-keyword,\n.scientific-article-card-tag,\n.scientific-article-card-status"), /text-transform: uppercase/);
+	assert.match(block(".scientific-article-card-keyword"), /--b-bg: var\(--sac-kw-bg\)/);
+	assert.match(block(".scientific-article-card-badge,\n.scientific-article-card-keyword,\n.scientific-article-card-tag,\n.scientific-article-card-status"), /background: var\(--b-bg\)/);
+	assert.doesNotMatch(block(".scientific-article-card-badge,\n.scientific-article-card-keyword,\n.scientific-article-card-tag,\n.scientific-article-card-status"), /text-transform/, "no uppercase unless the setting asks");
+});
+
+test("every badge option has CSS: variants, sizes, radii, uppercase modes", () => {
+	for (const v of I.BADGE_VARIANTS.filter((v) => v !== "light")) assert.ok(css.includes(`.sac-badge-${v} :is(`), `variant ${v}`);
+	for (const z of I.SIZES) {
+		assert.ok(css.includes(`.scientific-article-card.sac-badge-size-${z} {`), `size ${z}`);
+		assert.ok(css.includes(`.scientific-article-card.sac-badge-radius-${z} {`), `radius ${z}`);
+	}
+	assert.match(css, /\.sac-tt-type \.scientific-article-card-badge,\n\.sac-tt-all :is\(/);
+	for (const c of I.COLORS.filter((c) => c !== "accent")) assert.match(block(".scientific-article-card"), new RegExp(`--sac-${c}-solid:`), `${c} solid`);
 });
