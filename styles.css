@@ -1,6 +1,6 @@
 /*
  * Card styled after Mantine (https://mantine.dev): Card withBorder + shadow="sm" + radius="md",
- * light-variant Badge, Pill, Anchor and Accordion-like abstract toggle, with Mantine's default
+ * light-variant Badges (blue type, gray keywords), Anchor and Accordion-like abstract toggle, with Mantine's default
  * light/dark palettes following Obsidian's theme.
  */
 .scientific-article-card {
@@ -17,8 +17,8 @@
 	--sac-anchor: #228be6;
 	--sac-badge-bg: rgba(34, 139, 230, 0.1);
 	--sac-badge-color: #228be6;
-	--sac-pill-bg: #f1f3f5;
-	--sac-pill-color: #495057;
+	--sac-gray-badge-bg: rgba(134, 142, 150, 0.1);
+	--sac-gray-badge-color: #868e96;
 	--sac-thumb-bg: #f1f3f5;
 	--sac-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0 10px 15px -5px, rgba(0, 0, 0, 0.04) 0 7px 7px -5px;
 
@@ -45,8 +45,8 @@
 	--sac-anchor: #4dabf7;
 	--sac-badge-bg: rgba(34, 139, 230, 0.15);
 	--sac-badge-color: #4dabf7;
-	--sac-pill-bg: #242424;
-	--sac-pill-color: #c9c9c9;
+	--sac-gray-badge-bg: rgba(134, 142, 150, 0.15);
+	--sac-gray-badge-color: #ced4da;
 	--sac-thumb-bg: #242424;
 	--sac-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2) 0 10px 15px -5px;
 }
@@ -177,7 +177,7 @@
 	object-fit: cover;
 }
 
-/* Pill.Group */
+/* Group of Badge variant="light" color="gray" size="sm" */
 .scientific-article-card-keywords {
 	display: flex;
 	flex-wrap: wrap;
@@ -188,12 +188,15 @@
 .scientific-article-card-keyword {
 	display: inline-flex;
 	align-items: center;
-	height: 22px;
-	padding: 0 10px;
+	height: 18px;
+	padding: 0 8px;
 	border-radius: var(--sac-radius-xl);
-	background: var(--sac-pill-bg);
-	color: var(--sac-pill-color);
-	font-size: 12px;
+	background: var(--sac-gray-badge-bg);
+	color: var(--sac-gray-badge-color);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.25px;
+	text-transform: uppercase;
 	white-space: nowrap;
 }
 
