@@ -36,7 +36,7 @@ async function setup(listText, settings = {}) {
 		const el = env.mount();
 		const source = lines.slice(start + 1, end).join("\n");
 		plugin.processors.paper(source, el, { sourcePath: path, getSectionInfo: () => ({ lineStart: start }), addChild: (c) => c.load() });
-		return { el, source, data: yaml.load(source), block: { source, el, ctx: { sourcePath: path, getSectionInfo: () => ({ lineStart: start }) } } };
+		return { el, source, data: yaml.parse(source), block: { source, el, ctx: { sourcePath: path, getSectionInfo: () => ({ lineStart: start }) } } };
 	};
 	const renderNote = (path) => {
 		const el = env.mount();
@@ -50,7 +50,7 @@ const cardFields = (vault, needle) => {
 	const t = vault.text(LIST);
 	const i = t.indexOf(needle);
 	const s = t.lastIndexOf("```paper", i);
-	return yaml.load(t.slice(s + 9, t.indexOf("\n```", i)));
+	return yaml.parse(t.slice(s + 9, t.indexOf("\n```", i)));
 };
 
 test("inserting a card: placeholder, then the card; failures restore the text", async () => {
@@ -82,7 +82,7 @@ test("inserting a card: placeholder, then the card; failures restore the text", 
 	assert.match(doc, /⏳ Fetching paper metadata for PMID: 34265844/);
 	await pending;
 	assert.doesNotMatch(doc, /Fetching/);
-	const block = yaml.load(doc.match(/```paper\n([\s\S]*?)```/)[1]);
+	const block = yaml.parse(doc.match(/```paper\n([\s\S]*?)```/)[1]);
 	assert.equal(block.pmid, "34265844");
 	assert.match(block.image, /Fig1_HTML\.jpg$/);
 
@@ -235,7 +235,7 @@ test("Papers base: created next to the list, then reused", async () => {
 	const { vault, plugin } = await setup(`${card(ZUCCA)}\n`);
 	await plugin.createPapersBase(LIST);
 	const BASE = `${DIR}/Papers.base`;
-	assert.deepEqual(yaml.load(vault.text(BASE)).filters.and, ['type == "paper"', `file.inFolder("${DIR}")`]);
+	assert.deepEqual(yaml.parse(vault.text(BASE)).filters.and, ['type == "paper"', `file.inFolder("${DIR}")`]);
 	const before = vault.files.size;
 	await plugin.createPapersBase(LIST);
 	assert.equal(vault.files.size, before);

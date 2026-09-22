@@ -3,12 +3,12 @@
  * parsed from the file text), file manager (processFrontMatter, links) and workspace.
  */
 "use strict";
-const yaml = require("js-yaml");
+const yaml = require("yaml");
 const { TFile } = require("./env");
 
 function frontmatterOf(text) {
 	const m = text.match(/^---\n([\s\S]*?)\n---\n?/);
-	return m ? yaml.load(m[1]) || {} : null;
+	return m ? yaml.parse(m[1]) || {} : null;
 }
 
 function createApp(initialFiles = {}) {
@@ -65,7 +65,7 @@ function createApp(initialFiles = {}) {
 				const fm = frontmatterOf(e.text) || {};
 				const body = e.text.replace(/^---\n[\s\S]*?\n---\n?/, "");
 				fn(fm);
-				e.text = "---\n" + yaml.dump(fm, { lineWidth: -1 }) + "---\n" + body;
+				e.text = "---\n" + yaml.stringify(fm, { lineWidth: 0 }) + "---\n" + body;
 				changed(f);
 			},
 			generateMarkdownLink: (f) => `[[${f.basename}]]`,

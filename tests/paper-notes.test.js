@@ -50,7 +50,7 @@ test("refresh updates only fetched properties; empty values keep the old one", (
 });
 
 test("Papers.base: valid YAML, filters, four views, cards with the image cover", () => {
-	const base = yaml.load(I.papersBase("Projects/A/Biblios"));
+	const base = yaml.parse(I.papersBase("Projects/A/Biblios"));
 	assert.deepEqual(base.filters, { and: ['type == "paper"', 'file.inFolder("Projects/A/Biblios")'] });
 	assert.deepEqual(base.views.map((v) => [v.type, v.name]), [["table", "All papers"], ["table", "To read"], ["table", "By status"], ["cards", "Shelf"]]);
 	assert.deepEqual(base.views[0].sort, [{ property: "note.year", direction: "DESC" }]);
@@ -58,7 +58,7 @@ test("Papers.base: valid YAML, filters, four views, cards with the image cover",
 	assert.deepEqual(base.views[2].groupBy, { property: "note.status", direction: "ASC" });
 	assert.equal(base.views[3].image, "note.image");
 	assert.equal(base.views[3].imageFit, "contain");
-	assert.deepEqual(yaml.load(I.papersBase("/")).filters, { and: ['type == "paper"'] });
+	assert.deepEqual(yaml.parse(I.papersBase("/")).filters, { and: ['type == "paper"'] });
 });
 
 test("link helpers", () => {

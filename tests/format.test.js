@@ -39,7 +39,7 @@ test("citation line", () => {
 test("code block output is valid YAML with every field", () => {
 	const block = I.toCodeBlock(I.toFields(paper, I.DEFAULT_SETTINGS));
 	assert.match(block, /^```paper\n[\s\S]*\n```\n$/);
-	const d = yaml.load(block.replace(/^```paper\n/, "").replace(/```\n$/, ""));
+	const d = yaml.parse(block.replace(/^```paper\n/, "").replace(/```\n$/, ""));
 	assert.equal(d.title, paper.title);
 	assert.equal(d.pmid, "34265844");
 	assert.equal(d.keywords, "Deep Learning; Protein Folding");

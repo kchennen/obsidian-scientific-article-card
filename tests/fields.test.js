@@ -22,7 +22,7 @@ test("setFields replaces fields (incl. multi-line lists) and keeps everything el
 	]);
 	assert.deepEqual(I.setUserFields(lines, { status: "", rating: 0, tags: [], note: "" }), ['url: "u"', 'title: "T"', 'abstract: "A"']);
 	assert.deepEqual(I.setFields(['title: "T"'], { "paper-note": "[[X]]" }), ['title: "T"', 'paper-note: "[[X]]"']);
-	const parsed = yaml.load(I.setUserFields(lines, { status: "read", rating: 5, tags: ["x"], note: 'a "quoted" note' }).join("\n"));
+	const parsed = yaml.parse(I.setUserFields(lines, { status: "read", rating: 5, tags: ["x"], note: 'a "quoted" note' }).join("\n"));
 	assert.equal(parsed.note, 'a "quoted" note');
 });
 

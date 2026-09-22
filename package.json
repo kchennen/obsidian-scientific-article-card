@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-scientific-article-card",
-	"version": "1.11.0",
+	"version": "1.11.1",
 	"description": "Obsidian plugin: turn a PMID, DOI, arXiv ID or article URL into a scientific article card.",
 	"main": "main.js",
 	"private": true,
@@ -14,7 +14,7 @@
 	"devDependencies": {
 		"@codemirror/state": "^6.4.1",
 		"@codemirror/view": "^6.26.0",
-		"js-yaml": "^4.1.0",
-		"jsdom": "^24.0.0"
+		"jsdom": "^24.0.0",
+		"yaml": "^2.9.1"
 	}
 }

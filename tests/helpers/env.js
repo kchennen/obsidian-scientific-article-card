@@ -6,7 +6,7 @@
 const Module = require("module");
 const path = require("path");
 const { JSDOM } = require("jsdom");
-const yaml = require("js-yaml");
+const yaml = require("yaml");
 const { StateField } = require("@codemirror/state");
 
 const dom = new JSDOM("<!doctype html><body></body>");
@@ -134,7 +134,7 @@ const obsidianStub = {
 	MarkdownRenderChild,
 	TFile,
 	editorInfoField,
-	parseYaml: (s) => yaml.load(s),
+	parseYaml: (s) => yaml.parse(s),
 	normalizePath: (p) => {
 		const n = String(p).replace(/ /g, " ").replace(/[\\/]+/g, "/").replace(/^\/|\/$/g, "");
 		return n || "/";
