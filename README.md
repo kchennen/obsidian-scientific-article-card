@@ -67,6 +67,7 @@ Markdown links (`[text](url)`) and `<url>` are accepted too. Trailing `/full`, `
   - *Insert article card from PMID / DOI / URL…* — opens a prompt
   - *Create paper note from PMID / DOI / URL…* — see [Paper notes](#-paper-notes)
   - *Refresh paper metadata* — in a paper note
+  - *Link cards and paper notes in this note (backlinks)* — in a reading list
   - *Create Papers base (overview of paper notes)*
 - 🖱️ **Editor context menu**: *Convert to article card*.
 
@@ -102,15 +103,16 @@ note: "Compare with ESMFold on our cohort."
 
 ## 📚 Paper notes
 
-For papers you work with, create **one note per paper** with the 📄 button in the card's header (*Create note*). The paper's metadata becomes the note's properties, so each paper has its own tags, status and rating in Obsidian's tag pane, search, Dataview and Bases.
+For papers you work with, create **one note per paper** with the **Create note** button in the card's header. The paper's metadata becomes the note's properties, so each paper has its own tags, status and rating in Obsidian's tag pane, search, Dataview and Bases.
 
 - **Name**: `FirstAuthor_JournalAbbreviation_Year`, e.g. `Jumper_Nature_2021`, `Zucca_HumGenet_2025`. A different paper with the same name gets `…2025a`, `…2025b`, and so on. If a paper note with the same DOI or PMID already exists, it is reused.
 - **Location**: next to the note with the card (optionally in a subfolder), or in one dedicated folder. See the settings.
-- **Content**: the properties (`type: paper`, `title`, `authors`, `journal`, `year`, `doi`, `pmid`, `pmcid`, `url`, `image`, `publication-type`, `keywords`, `status`, `rating`, `tags`, `created`), a card drawn from them (a `paper-note` code block), the abstract, and a *Notes* section.
+- **Content**: the properties (`type: paper`, `title`, `authors`, `journal`, `year`, `doi`, `pmid`, `pmcid`, `url`, `image`, `publication-type`, `keywords`, `status`, `rating`, `tags`, `created`), a card drawn from them — the ```` ```paper-note ```` code block at the top, which the plugin renders as the card (if you see it as plain text, the plugin isn't running), the abstract, and a *Notes* section.
 - **Your notes move with it**: the card's status, rating and tags become the note's properties, and its note goes into *Notes*.
-- **Reading lists keep their cards**: the card gets a `paper-note` link, its 📄 button becomes *Open note*, and its *Your notes* section shows the paper note's status, rating and tags. The ✏️ button edits the paper note's properties.
+- **Reading lists keep their cards**: the card gets a `paper-note` link, its button becomes **Open note**, and its *Your notes* section shows the paper note's status, rating and tags. The ✏️ button edits the paper note's properties.
+- **Backlinks**: the paper note and the reading list link to each other through properties — `reading-lists: ["[[Biblios]]"]` in the paper note and `papers: ["[[Zucca_HumGenet_2025]]"]` in the reading list — so each shows in the other's backlinks and on the graph, and Obsidian updates them when you rename a note. For cards linked before version 1.8, run *Link cards and paper notes in this note (backlinks)* in the reading list.
 
-**Refresh paper metadata**: in a paper note, use the 🔄 button on its card or the *Refresh paper metadata* command to fetch the paper again (for example after a preprint is published, or when a figure becomes available). It updates only the fetched properties — title, authors, journal, year, volume, issue, pages, identifiers, URL, image, publication type and keywords — and never your `status`, `rating`, `tags`, `created`, other properties or the note's text. An empty result keeps the old value.
+**Refresh paper metadata**: in a paper note, use the **Refresh** button on its card or the *Refresh paper metadata* command to fetch the paper again (for example after a preprint is published, or when a figure becomes available). It updates only the fetched properties — title, authors, journal, year, volume, issue, pages, identifiers, URL, image, publication type and keywords — and never your `status`, `rating`, `tags`, `created`, other properties or the note's text. An empty result keeps the old value.
 
 **Papers base**: the *Create Papers base* command creates `Papers.base` in the papers folder (or opens it if it exists), listing the paper notes in that folder with four views:
 
@@ -186,7 +188,7 @@ gh attestation verify main.js --repo kchennen/obsidian-scientific-article-card
 
 - Some publishers (e.g. Elsevier / ScienceDirect) block automated page requests. Paste the DOI or PMID instead of the page URL.
 - The preview image is the article's first figure when it is open access in PubMed Central. Otherwise it comes from the publisher page, which many publishers block. Articles indexed in PubMed fall back to PubMed's preview image.
-- The link from a card to its paper note sits inside a code block, which Obsidian doesn't track: it doesn't show in backlinks and isn't updated when you rename the paper note. The card then finds the note by its DOI or PMID instead.
+- The card's own `paper-note` link sits inside a code block, which Obsidian doesn't track. The `papers` / `reading-lists` properties provide the backlinks; if the card's link breaks after a rename, the card finds the note by its DOI or PMID.
 
 ## 👤 Author
 

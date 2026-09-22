@@ -27,6 +27,7 @@ const { EditorView } = require("@codemirror/view");
 
 const CODE_BLOCK_LANG = "paper";
 const PAPER_NOTE_LANG = "paper-note";
+const PAPER_NOTE_PLACEHOLDER = "This block shows the paper's card, drawn from the properties above (Scientific Article Card plugin).";
 const COLORS = ["blue", "cyan", "teal", "green", "lime", "yellow", "orange", "red", "pink", "grape", "violet", "indigo", "gray", "accent"];
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const EUROPEPMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search";
@@ -1000,7 +1001,7 @@ function paperProps(p, user, settings) {
 }
 
 function paperNoteBody(abstract, note) {
-	let body = "```" + PAPER_NOTE_LANG + "\n```\n";
+	let body = "```" + PAPER_NOTE_LANG + "\n" + PAPER_NOTE_PLACEHOLDER + "\n```\n";
 	if (abstract) body += "\n## Abstract\n\n" + abstract + "\n";
 	body += "\n## Notes\n\n" + (note ? note.trim() + "\n" : "");
 	return body;
@@ -1182,21 +1183,24 @@ function renderCardData(data, el, settings, actions) {
 	if (d.host) header.createSpan({ cls: "scientific-article-card-host", text: d.host });
 	if (d.type) header.createSpan({ cls: "scientific-article-card-badge", text: d.type });
 	const acts = header.createSpan({ cls: "scientific-article-card-actions" });
-	const action = (label, icon, fn) => {
+	const action = (label, icon, fn, withText) => {
 		const btn = acts.createEl("button", {
-			cls: "scientific-article-card-edit clickable-icon",
+			cls: withText ? "scientific-article-card-button" : "scientific-article-card-edit clickable-icon",
 			attr: { type: "button", "aria-label": label, title: label },
 		});
-		if (setIcon) setIcon(btn, icon);
-		else btn.setText(label);
+		if (setIcon) {
+			const ic = withText ? btn.createSpan({ cls: "scientific-article-card-button-icon" }) : btn;
+			setIcon(ic, icon);
+		}
+		if (withText || !setIcon) btn.createSpan({ text: label });
 		btn.addEventListener("click", (evt) => {
 			evt.preventDefault();
 			evt.stopPropagation();
 			fn();
 		});
 	};
-	if (a.note) action(a.note.label, a.note.icon, a.note.onClick);
-	if (a.onEdit) action("Edit notes", "pencil", a.onEdit);
+	if (a.note) action(a.note.label, a.note.icon, a.note.onClick, true);
+	if (a.onEdit) action("Edit notes", "pencil", a.onEdit, false);
 	if (!acts.childElementCount) acts.remove();
 
 	if (d.url) externalLink(body, d.title || d.url, d.url, "scientific-article-card-title");
@@ -1429,6 +1433,24 @@ class ScientificArticleCardPlugin extends Plugin {
 			},
 		});
 		this.addCommand({
+			id: "connect-cards-and-paper-notes",
+			name: "Link cards and paper notes in this note (backlinks)",
+			icon: "link",
+			checkCallback: (checking) => {
+				const file = this.app.workspace.getActiveFile();
+				if (!file || file.extension !== "md") return false;
+				if (!checking)
+					this.connectCardsInNote(file).then((n) =>
+						new Notice(
+							n
+								? `Scientific Article Card: linked ${n} paper note${n > 1 ? "s" : ""} with ${file.basename}.`
+								: "Scientific Article Card: no card in this note is linked to a paper note."
+						)
+					);
+				return true;
+			},
+		});
+		this.addCommand({
 			id: "create-papers-base",
 			name: "Create Papers base (overview of paper notes)",
 			icon: "table",
@@ -1538,7 +1560,7 @@ class ScientificArticleCardPlugin extends Plugin {
 		}
 		this.track(
 			renderCardData(fmToCard(fm, this.settings), target, this.settings, {
-				note: { label: "Refresh metadata", icon: "refresh-cw", onClick: () => this.refreshPaperNote(file) },
+				note: { label: "Refresh", icon: "refresh-cw", onClick: () => this.refreshPaperNote(file) },
 				onEdit: () => this.editProperties(file, fm.title),
 			})
 		);
@@ -1635,13 +1657,64 @@ class ScientificArticleCardPlugin extends Plugin {
 		}
 
 		if (block) {
-			const link = this.app.fileManager.generateMarkdownLink(file, block.ctx.sourcePath);
+			const link = this.wikiLink(file, block.ctx.sourcePath);
 			const ok = await this.rewriteCard(block, (lines) =>
 				setFields(lines, { status: null, rating: null, tags: null, note: null, "paper-note": link })
 			);
 			if (!ok) new Notice(`Scientific Article Card: created ${file.basename}, but couldn't link the card to it.`);
+			const listFile = this.app.vault.getAbstractFileByPath(sourcePath);
+			if (listFile instanceof TFile) await this.connectNotes(listFile, file);
 		}
 		await this.app.workspace.getLeaf("tab").openFile(file);
+	}
+
+	/** Wiki link to `file` as seen from `fromPath`. */
+	wikiLink(file, fromPath) {
+		return `[[${this.app.metadataCache.fileToLinktext(file, fromPath || "", true)}]]`;
+	}
+
+	/** Add `link` to the list property `key` of `file` (no duplicates). */
+	async addLinkProperty(file, key, link) {
+		const target = linkpathFrom(link);
+		await this.app.fileManager.processFrontMatter(file, (fm) => {
+			const list = asList(fm[key]);
+			if (!list.some((x) => linkpathFrom(x) === target)) fm[key] = list.concat(link);
+		});
+	}
+
+	/**
+	 * Connect a reading list and a paper note with real (indexed) links, since links inside code blocks
+	 * aren't: the paper note lists the reading list in `reading-lists`, the reading list lists it in `papers`.
+	 */
+	async connectNotes(listFile, paperFile) {
+		if (!(listFile instanceof TFile) || !(paperFile instanceof TFile) || listFile.path === paperFile.path) return;
+		await this.addLinkProperty(paperFile, "reading-lists", this.wikiLink(listFile, paperFile.path));
+		await this.addLinkProperty(listFile, "papers", this.wikiLink(paperFile, listFile.path));
+	}
+
+	/** For every card in `file` linked to a paper note, add the backlink properties on both sides. */
+	async connectCardsInNote(file) {
+		const text = await this.app.vault.read(file);
+		const lines = text.split("\n");
+		let connected = 0;
+		for (let i = 0; i < lines.length; i++) {
+			if (!new RegExp("^```" + CODE_BLOCK_LANG + "\\s*$").test(lines[i])) continue;
+			let j = i + 1;
+			while (j < lines.length && !/^```\s*$/.test(lines[j])) j++;
+			let d = null;
+			try {
+				d = parseYaml(lines.slice(i + 1, j).join("\n")) || {};
+			} catch (e) {
+				/* skip invalid card */
+			}
+			const paper = d && this.findLinkedNote(d, file.path);
+			if (paper) {
+				await this.connectNotes(file, paper);
+				connected++;
+			}
+			i = j;
+		}
+		return connected;
 	}
 
 	/** Fetch the article again and update the note's fetched properties only. */
