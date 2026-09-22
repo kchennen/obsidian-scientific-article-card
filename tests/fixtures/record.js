@@ -31,6 +31,7 @@ function trim(url, text) {
 		let text = await res.text();
 		const key = normalise(url);
 		text = trim(key, text);
+		if (manifest[key]) return { status: res.status, text, get json() { return JSON.parse(text); } }; // already recorded
 		const ext = /json|crossref|europepmc/.test(key) && !/\.xml$/.test(key) ? "json" : "xml";
 		const file = `r${String(++n).padStart(2, "0")}.${ext}`;
 		fs.writeFileSync(path.join(__dirname, file), text);

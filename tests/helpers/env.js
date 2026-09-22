@@ -15,7 +15,8 @@ global.window = w;
 global.document = w.document;
 global.DOMParser = w.DOMParser;
 global.HTMLElement = w.HTMLElement;
-global.navigator = { onLine: true };
+// Node 22+ has a read-only global navigator: redefine it instead of assigning
+Object.defineProperty(globalThis, "navigator", { value: { onLine: true }, configurable: true, writable: true });
 
 // Obsidian's HTMLElement helpers
 const H = w.HTMLElement.prototype;
