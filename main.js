@@ -605,6 +605,30 @@ class Resolver {
 		};
 	}
 
+	/**
+	 * URL of the first figure of a PMC article, or "". Uses NCBI's PMC Open Access dataset on AWS
+	 * (https://registry.opendata.aws/ncbi-pmc/), which serves figures directly, unlike the PMC and
+	 * PubMed web pages. Covers open-access articles and author manuscripts.
+	 */
+	async pmcFigure(pmcid) {
+		const bucket = "https://pmc-oa-opendata.s3.amazonaws.com/";
+		const listing = parseXml(await http(`${bucket}?list-type=2&max-keys=1000&prefix=${pmcid}.`, { timeout: 10000 }));
+		const keys = Array.from(listing.getElementsByTagNameNS("*", "Key")).map((k) => k.textContent);
+		const version = Math.max(0, ...keys.map((k) => Number((k.match(/^PMC\d+\.(\d+)\//) || [])[1] || 0)));
+		if (!version) return "";
+		const files = keys.filter((k) => k.startsWith(`${pmcid}.${version}/`)).map((k) => k.slice(k.indexOf("/") + 1));
+		const images = files.filter((f) => /\.(jpe?g|png|gif|webp)$/i.test(f));
+		if (!images.length) return "";
+		// the article XML says which graphic belongs to the first figure (skips equations, logos…)
+		const jats = parseXml(await http(`${bucket}${pmcid}.${version}/${pmcid}.${version}.xml`, { timeout: 15000 }));
+		const graphic = jats.querySelector("fig graphic");
+		const href = graphic && (graphic.getAttribute("xlink:href") || graphic.getAttribute("href"));
+		if (!href) return "";
+		const base = href.replace(/\.(jpe?g|png|gif|tiff?|webp)$/i, "");
+		const file = images.find((f) => f === href) || images.find((f) => f.replace(/\.[^.]+$/, "") === base);
+		return file ? `${bucket}${pmcid}.${version}/${encodeURIComponent(file)}` : "";
+	}
+
 	async byUrl(url) {
 		const page = await this.scrape(url);
 		let paper = null;
@@ -649,7 +673,15 @@ class Resolver {
 		}
 		p.url = order.map((k) => links[k]).find(Boolean) || "";
 
-		// Try the publisher landing page for a preview image (og:image) and the real host name.
+		// Preview image: the first figure from PMC when the article is there (reliable, no publisher
+		// bot walls), otherwise the publisher landing page's og:image.
+		if (s.fetchImage && !p.image && p.pmcid) {
+			try {
+				p.image = await this.pmcFigure(p.pmcid);
+			} catch (e) {
+				console.debug("[scientific-article-card] no PMC figure", p.pmcid, e.message);
+			}
+		}
 		if (s.fetchImage && !p.image) {
 			const landing =
 				(ident.url && !/(ncbi\.nlm\.nih\.gov|europepmc\.org|arxiv\.org|doi\.org)$/.test(hostOf(ident.url)) && ident.url) ||
