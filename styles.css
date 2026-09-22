@@ -95,6 +95,7 @@ a.scientific-article-card-title:hover {
 }
 
 .scientific-article-card-thumb {
+	order: -1; /* image on the left of the text */
 	flex: 0 0 auto;
 	width: 140px;
 	max-height: 110px;
@@ -163,7 +164,7 @@ a.scientific-article-card-title:hover {
 	font-size: var(--font-ui-smaller);
 }
 
-/* The image always stays on the right; on narrow cards (phone, sidebar) it just gets smaller. */
+/* The image always stays on the left; on narrow cards (phone, sidebar) it just gets smaller. */
 @container scientific-article-card (max-width: 520px) {
 	.scientific-article-card-main {
 		gap: 10px;
