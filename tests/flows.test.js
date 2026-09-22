@@ -115,7 +115,8 @@ test("Create note: named, placed next to the list, notes moved, card linked, bac
 	assert.deepEqual([fm.status, fm.rating, fm.tags, fm.summary], ["reading", 4, ["impatient2"], "Check CAGI6."]);
 	assert.deepEqual(fm["reading-lists"], ["[[Biblios]]"]);
 	assert.deepEqual(vault.frontmatter(LIST).papers, ["[[Zucca_HumGenet_2025]]"]);
-	assert.ok(vault.text(NOTE).includes("```paper-note\n" + I.PAPER_NOTE_PLACEHOLDER + "\n```"));
+	assert.doesNotMatch(vault.text(NOTE), /```/, "no card block in the paper note");
+	assert.match(vault.text(NOTE).replace(/^---[\s\S]*?---\n/, ""), /^## Abstract\n\nIdentifying/);
 	const c = cardFields(vault, "38520562");
 	assert.deepEqual([c["paper-note"], c.status, c.rating, c.tags, c.note], ["[[Zucca_HumGenet_2025]]", undefined, undefined, undefined, undefined]);
 });
@@ -142,22 +143,34 @@ test("linked card: Open note, the note's values, re-rendered when the note chang
 	assert.equal(cardFields(vault, "38520562").status, undefined, "the card itself is untouched");
 });
 
-test("leftover card notes on a linked card: warning, then Move to paper note (the Meyer case)", async () => {
+test("leftover notes on a linked card (the Meyer case): Open note moves them, then opens the note", async () => {
 	const { vault, plugin, render } = await setup(`${card(ZUCCA)}\n`);
 	await plugin.createPaperNote({ ident: I.identFromCard(ZUCCA), card: Object.assign({}, ZUCCA, { note: "test note" }), sourcePath: LIST, block: render("38520562").block });
 	const NOTE = `${DIR}/Zucca_HumGenet_2025.md`;
 	let r = render("38520562");
 	await plugin.rewriteCard(r.block, (L) => I.setFields(L, { status: "read", rating: 4, note: "test note summary" }));
 	r = render("38520562");
-	const strip = r.el.querySelector(".scientific-article-card-conflict");
-	assert.ok(strip, "warning shown");
-	assert.match(strip.textContent, /test note summary/);
-	strip.querySelector("button").click();
-	await until(() => cardFields(vault, "38520562").note === undefined);
+	assert.deepEqual(texts(r.el, ".scientific-article-card-button"), ["Open note"], "no extra button or warning");
+	assert.deepEqual(texts(r.el, ".scientific-article-card-note p"), ["test note"], "the card shows the paper note's summary");
+	vault.opened.length = 0;
+	r.el.querySelector(".scientific-article-card-button").click();
+	await until(() => vault.opened.includes(NOTE));
 	const fm = vault.frontmatter(NOTE);
 	assert.deepEqual([fm.status, fm.rating, fm.summary], ["read", 4, "test note"]);
-	assert.match(vault.text(NOTE), /## Notes\n\ntest note summary\n/);
-	assert.equal(render("38520562").el.querySelector(".scientific-article-card-conflict"), null);
+	assert.match(vault.text(NOTE), /## Notes\n\ntest note summary\n/, "a different note is kept in Notes");
+	assert.deepEqual(["status", "rating", "note"].map((k) => cardFields(vault, "38520562")[k]), [undefined, undefined, undefined]);
+});
+
+test("leftover notes on a linked card: the pencil moves them first and shows the merged values", async () => {
+	const { vault, plugin, render } = await setup(`${card(ZUCCA)}\n`);
+	await plugin.createPaperNote({ ident: I.identFromCard(ZUCCA), card: ZUCCA, sourcePath: LIST, block: render("38520562").block });
+	let r = render("38520562");
+	await plugin.rewriteCard(r.block, (L) => I.setFields(L, { status: "reading", tags: ["ehr"], note: "my summary" }));
+	r = render("38520562");
+	r.el.querySelector('[aria-label="Edit notes"]').click();
+	await until(() => env.lastModal() && env.lastModal().values.note === "my summary");
+	assert.deepEqual(env.lastModal().values, { status: "reading", rating: 0, tags: ["ehr"], note: "my summary" });
+	assert.equal(cardFields(vault, "38520562").note, undefined);
 });
 
 test("no duplicates: double click, same paper again, same name for another paper → a", async () => {
@@ -194,17 +207,17 @@ test("cards find their paper note by DOI/PMID: renamed note, note made elsewhere
 	assert.deepEqual(vault.frontmatter(LIST).papers, ["[[AlphaFold paper]]"]);
 });
 
-test("paper note: its card, Refresh keeps your properties and text, commands", async () => {
+test("Refresh command keeps your properties and text; legacy paper-note block still renders", async () => {
 	const { vault, plugin, renderNote } = await setup(`${card(ZUCCA)}\n`);
 	await plugin.createPaperNote({ ident: I.identFromCard(ZUCCA), card: null, sourcePath: LIST, block: null });
 	const NOTE = `${DIR}/Zucca_HumGenet_2025.md`;
-	const el = renderNote(NOTE);
-	assert.deepEqual(texts(el, ".scientific-article-card-button"), ["Refresh"]);
-	assert.ok(el.querySelector('[aria-label="Edit notes"]'));
+	const el = renderNote(NOTE); // notes made by 1.6–1.9 contain a ```paper-note block
+	assert.equal(el.querySelector(".scientific-article-card-title").textContent, "An AI-based approach driven by genotypes and phenotypes to uplift the diagnostic yield of genetic diseases");
 	await vault.app.fileManager.processFrontMatter(vault.file(NOTE), (f) => Object.assign(f, { title: "OLD", status: "read", summary: "S", tags: ["mine"], custom: 1 }));
 	await vault.app.vault.process(vault.file(NOTE), (t) => t + "\nMy paragraph.\n");
 	const body = vault.text(NOTE).replace(/^---[\s\S]*?---\n/, "");
-	el.querySelector(".scientific-article-card-button").click();
+	vault.setActive(NOTE);
+	plugin.commands["refresh-paper-metadata"].checkCallback(false);
 	await until(() => vault.frontmatter(NOTE).title !== "OLD");
 	const fm = vault.frontmatter(NOTE);
 	assert.deepEqual([fm.status, fm.summary, fm.tags, fm.custom], ["read", "S", ["mine"], 1]);

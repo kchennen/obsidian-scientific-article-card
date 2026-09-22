@@ -26,11 +26,10 @@ test("paper properties: type, lists, numbers, user fields, empty values dropped"
 	assert.match(props.created, /^\d{4}-\d{2}-\d{2}$/);
 });
 
-test("paper note body: explained card block, abstract, Notes", () => {
-	const body = I.paperNoteBody("The abstract.", "");
-	assert.ok(body.startsWith("```paper-note\n" + I.PAPER_NOTE_PLACEHOLDER + "\n```\n"));
-	assert.match(body, /## Abstract\n\nThe abstract\.\n/);
-	assert.match(body, /## Notes\n\n$/);
+test("paper note body: abstract and Notes only (no card block)", () => {
+	assert.equal(I.paperNoteBody("The abstract.", ""), "## Abstract\n\nThe abstract.\n\n## Notes\n\n");
+	assert.equal(I.paperNoteBody("", ""), "## Notes\n\n");
+	assert.doesNotMatch(I.paperNoteBody("A", "n"), /```/);
 });
 
 test("fmToCard maps properties to card fields", () => {

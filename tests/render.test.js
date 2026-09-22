@@ -86,16 +86,6 @@ test("linked card: shows the paper note's values, names the note, labelled butto
 	assert.deepEqual([opened, edited], [1, 1]);
 });
 
-test("conflict strip with its action", () => {
-	const el = mount();
-	let moved = 0;
-	I.renderCardData(data, el, S, { conflict: { text: "Leftover notes", label: "Move to paper note", onClick: () => moved++ } });
-	const strip = el.querySelector(".scientific-article-card-conflict");
-	assert.match(strip.textContent, /Leftover notes/);
-	strip.querySelector("button").click();
-	assert.equal(moved, 1);
-});
-
 test("color settings become classes on the card", () => {
 	const el = mount();
 	const card = I.renderCardData(data, el, Object.assign({}, S, { cardStyle: "obsidian", typeColor: "red", keywordColor: "accent", tagColor: "nope" }), {});

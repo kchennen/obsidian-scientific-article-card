@@ -27,7 +27,6 @@ const { EditorView } = require("@codemirror/view");
 
 const CODE_BLOCK_LANG = "paper";
 const PAPER_NOTE_LANG = "paper-note";
-const PAPER_NOTE_PLACEHOLDER = "This block shows the paper's card, drawn from the properties above (Scientific Article Card plugin).";
 const COLORS = ["blue", "cyan", "teal", "green", "lime", "yellow", "orange", "red", "pink", "grape", "violet", "indigo", "gray", "accent"];
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const EUROPEPMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search";
@@ -1001,10 +1000,11 @@ function paperProps(p, user, settings) {
 	return props;
 }
 
+/** Body of a new paper note: the abstract and a Notes section (the metadata lives in the properties). */
 function paperNoteBody(abstract, note) {
-	let body = "```" + PAPER_NOTE_LANG + "\n" + PAPER_NOTE_PLACEHOLDER + "\n```\n";
-	if (abstract) body += "\n## Abstract\n\n" + abstract + "\n";
-	body += "\n## Notes\n\n" + (note ? note.trim() + "\n" : "");
+	let body = "";
+	if (abstract) body += "## Abstract\n\n" + abstract + "\n\n";
+	body += "## Notes\n\n" + (note ? note.trim() + "\n" : "");
 	return body;
 }
 
@@ -1051,15 +1051,6 @@ function cardUserFields(d) {
 
 function hasUserFields(u) {
 	return !!(u.status || u.rating || u.tags.length || u.note);
-}
-
-function describeUserFields(u) {
-	const parts = [];
-	if (u.status) parts.push(`status “${STATUSES[u.status] || u.status}”`);
-	if (u.rating) parts.push(`${u.rating}★`);
-	if (u.tags.length) parts.push(u.tags.map((t) => "#" + t).join(" "));
-	if (u.note) parts.push(`note “${u.note.length > 40 ? u.note.slice(0, 40) + "…" : u.note}”`);
-	return parts.join(", ");
 }
 
 /**
@@ -1208,10 +1199,8 @@ function renderCard(source, el, settings, actions) {
 }
 
 /**
- * actions: { onEdit(), note: { label, icon, onClick() }, user: { status, rating, tags, note }, userSource,
- *            conflict: { text, label, onClick() } }
+ * actions: { onEdit(), note: { label, icon, onClick() }, user: { status, rating, tags, note }, userSource }
  * `user` overrides the card's own notes fields (used when the card is linked to a paper note, named `userSource`).
- * `conflict` shows a warning with an action (the linked card still has notes of its own).
  */
 function renderCardData(data, el, settings, actions) {
 	const a = actions || {};
@@ -1317,18 +1306,6 @@ function renderCardData(data, el, settings, actions) {
 			const note = mine.createDiv({ cls: "scientific-article-card-note" });
 			for (const para of u.note.split(/\n{2,}/)) note.createEl("p", { text: para });
 		}
-	}
-
-	if (a.conflict) {
-		const warn = card.createDiv({ cls: "scientific-article-card-conflict" });
-		warn.createSpan({ text: a.conflict.text });
-		const btn = warn.createEl("button", { cls: "scientific-article-card-button is-warning", attr: { type: "button" } });
-		btn.createSpan({ text: a.conflict.label });
-		btn.addEventListener("click", (evt) => {
-			evt.preventDefault();
-			evt.stopPropagation();
-			a.conflict.onClick();
-		});
 	}
 
 	if (d.abstract) {
@@ -1615,17 +1592,14 @@ class ScientificArticleCardPlugin extends Plugin {
 					icon: "file-text",
 					onClick: async () => {
 						if (!cardLinked) await this.linkCard(block, linked); // found by DOI/PMID: record the link
+						if (hasUserFields(own)) await this.moveCardNotes(block, linked, own);
 						await this.app.workspace.getLeaf("tab").openFile(linked);
 					},
 				},
-				onEdit: () => this.editProperties(linked, d.title),
-				conflict: hasUserFields(own)
-					? {
-							text: `This card also has notes of its own (${describeUserFields(own)}). The card shows the paper note's.`,
-							label: "Move to paper note",
-							onClick: () => this.moveCardNotes(block, linked, own),
-					  }
-					: null,
+				onEdit: async () => {
+					const merged = hasUserFields(own) ? await this.moveCardNotes(block, linked, own) : null;
+					this.editProperties(linked, d.title, merged);
+				},
 			};
 		} else {
 			actions = {
@@ -1654,26 +1628,33 @@ class ScientificArticleCardPlugin extends Plugin {
 		return ok;
 	}
 
-	/** Move a linked card's own notes into its paper note, then remove them from the card. */
+	/**
+	 * Move a linked card's own notes (status, rating, tags, note) into its paper note, then remove them from
+	 * the card, so the paper note is the only place for them. Returns the paper note's merged properties.
+	 */
 	async moveCardNotes(block, file, own) {
-		await this.mergeUserIntoNote(file, own);
+		const merged = await this.mergeUserIntoNote(file, own);
 		const ok = await this.rewriteCard(block, (lines) => setFields(lines, { status: null, rating: null, tags: null, note: null }));
 		new Notice(
 			ok
 				? `Scientific Article Card: moved the card's notes to ${file.basename}.`
 				: `Scientific Article Card: copied the card's notes to ${file.basename}, but couldn't remove them from the card.`
 		);
+		return merged;
 	}
 
 	async mergeUserIntoNote(file, own) {
 		let leftover = "";
+		let merged = null;
 		await this.app.fileManager.processFrontMatter(file, (fm) => {
 			leftover = mergeUserIntoProps(fm, own);
+			merged = Object.assign({}, fm);
 		});
 		if (leftover) await this.app.vault.process(file, (text) => appendToNotesSection(text, leftover));
+		return merged;
 	}
 
-	/** The ```paper-note card inside a paper note: drawn from the note's own properties. */
+	/** Legacy: paper notes made by versions 1.6–1.9 start with a ```paper-note block, still drawn from their properties. */
 	renderPaperNoteBlock(target, ctx) {
 		const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
 		const fm = file instanceof TFile ? (this.app.metadataCache.getFileCache(file) || {}).frontmatter : null;
@@ -1881,8 +1862,8 @@ class ScientificArticleCardPlugin extends Plugin {
 	}
 
 	/** Edit status, rating and tags of a paper note (its properties). */
-	editProperties(file, title) {
-		const fm = (this.app.metadataCache.getFileCache(file) || {}).frontmatter || {};
+	editProperties(file, title, current) {
+		const fm = current || (this.app.metadataCache.getFileCache(file) || {}).frontmatter || {};
 		const values = {
 			status: STATUSES[fm.status] ? fm.status : "",
 			rating: Math.max(0, Math.min(5, parseInt(fm.rating, 10) || 0)),
@@ -2328,4 +2309,4 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 module.exports = ScientificArticleCardPlugin;
 module.exports.default = ScientificArticleCardPlugin;
 // exposed for testing
-module.exports._internals = { formatAuthors, citationLine, idLinks, COLORS, STATUSES, USER_KEYS, CODE_BLOCK_LANG, PAPER_NOTE_LANG, PAPER_NOTE_PLACEHOLDER, cardUserFields, mergeUserIntoProps, appendToNotesSection, refreshProps, papersBase, FETCHED_PROPS, parseTags, setFields, setUserFields, findBlock, renderCard, renderCardData, paperNoteBaseName, paperProps, paperNoteBody, fmToCard, cardToPaper, identFromCard, linkpathFrom, colorClasses, toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };
+module.exports._internals = { formatAuthors, citationLine, idLinks, COLORS, STATUSES, USER_KEYS, CODE_BLOCK_LANG, PAPER_NOTE_LANG, cardUserFields, mergeUserIntoProps, appendToNotesSection, refreshProps, papersBase, FETCHED_PROPS, parseTags, setFields, setUserFields, findBlock, renderCard, renderCardData, paperNoteBaseName, paperProps, paperNoteBody, fmToCard, cardToPaper, identFromCard, linkpathFrom, colorClasses, toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };
