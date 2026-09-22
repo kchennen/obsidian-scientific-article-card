@@ -1,18 +1,59 @@
+/*
+ * Card styled after Mantine (https://mantine.dev): Card withBorder + shadow="sm" + radius="md",
+ * light-variant Badge, Pill, Anchor and Accordion-like abstract toggle, with Mantine's default
+ * light/dark palettes following Obsidian's theme.
+ */
 .scientific-article-card {
-	border: 1px solid var(--background-modifier-border);
-	border-radius: var(--radius-m, 8px);
-	background: var(--background-primary-alt);
-	padding: 12px 14px;
-	margin: 4px 0;
-	font-size: var(--font-ui-small);
-	line-height: 1.45;
-	overflow: hidden;
+	--sac-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+	--sac-radius-sm: 4px;
+	--sac-radius-md: 8px;
+	--sac-radius-xl: 32px;
+	/* light (Mantine defaults) */
+	--sac-body: #ffffff;
+	--sac-text: #000000;
+	--sac-dimmed: #868e96;
+	--sac-border: #dee2e6;
+	--sac-hover: #f8f9fa;
+	--sac-anchor: #228be6;
+	--sac-badge-bg: rgba(34, 139, 230, 0.1);
+	--sac-badge-color: #228be6;
+	--sac-pill-bg: #f1f3f5;
+	--sac-pill-color: #495057;
+	--sac-thumb-bg: #f1f3f5;
+	--sac-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0 10px 15px -5px, rgba(0, 0, 0, 0.04) 0 7px 7px -5px;
+
 	container: scientific-article-card / inline-size;
+	margin: 4px 0;
+	padding: 16px;
+	border: 1px solid var(--sac-border);
+	border-radius: var(--sac-radius-md);
+	background: var(--sac-body);
+	box-shadow: var(--sac-shadow);
+	color: var(--sac-text);
+	font-family: var(--sac-font);
+	font-size: 14px;
+	line-height: 1.55;
+	overflow: hidden;
+}
+
+.theme-dark .scientific-article-card {
+	--sac-body: #2e2e2e;
+	--sac-text: #c9c9c9;
+	--sac-dimmed: #828282;
+	--sac-border: #424242;
+	--sac-hover: #3b3b3b;
+	--sac-anchor: #4dabf7;
+	--sac-badge-bg: rgba(34, 139, 230, 0.15);
+	--sac-badge-color: #4dabf7;
+	--sac-pill-bg: #242424;
+	--sac-pill-color: #c9c9c9;
+	--sac-thumb-bg: #242424;
+	--sac-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2) 0 10px 15px -5px;
 }
 
 .scientific-article-card-main {
 	display: flex;
-	gap: 14px;
+	gap: 16px;
 	align-items: flex-start;
 }
 
@@ -21,16 +62,17 @@
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 6px;
 }
 
+/* Group: favicon + host (dimmed xs text) + type Badge */
 .scientific-article-card-header {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 6px;
-	color: var(--text-muted);
-	font-size: var(--font-ui-smaller);
+	gap: 8px;
+	color: var(--sac-dimmed);
+	font-size: 12px;
 }
 
 .scientific-article-card-favicon {
@@ -39,32 +81,44 @@
 	border-radius: 2px;
 }
 
+/* Badge variant="light" size="sm" */
 .scientific-article-card-badge {
-	padding: 0 6px;
-	border-radius: var(--radius-s, 4px);
-	background: var(--background-modifier-hover);
-	color: var(--text-normal);
+	display: inline-flex;
+	align-items: center;
+	height: 18px;
+	padding: 0 8px;
+	border-radius: var(--sac-radius-xl);
+	background: var(--sac-badge-bg);
+	color: var(--sac-badge-color);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.25px;
+	text-transform: uppercase;
 	white-space: nowrap;
 }
 
-a.scientific-article-card-title,
+/* Text fw={600} size="lg" */
+.scientific-article-card a.scientific-article-card-title,
 .scientific-article-card-title {
 	display: block;
-	font-size: var(--font-ui-medium);
-	font-weight: var(--font-semibold, 600);
-	color: var(--text-normal);
+	color: var(--sac-text);
+	font-size: 17px;
+	font-weight: 600;
+	line-height: 1.35;
 	text-decoration: none;
 	background-image: none;
 	padding-right: 0;
 }
 
-a.scientific-article-card-title:hover {
-	color: var(--text-accent);
+.scientific-article-card a.scientific-article-card-title:hover {
+	color: var(--sac-anchor);
 	text-decoration: underline;
 }
 
+/* Text size="sm" c="dimmed" lineClamp={2} */
 .scientific-article-card-authors {
-	color: var(--text-muted);
+	color: var(--sac-dimmed);
+	font-size: 14px;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
@@ -72,79 +126,127 @@ a.scientific-article-card-title:hover {
 }
 
 .scientific-article-card-citation {
-	color: var(--text-muted);
+	color: var(--sac-text);
+	font-size: 14px;
 }
 
 .scientific-article-card-ids {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 4px 10px;
-	margin-top: 2px;
-	font-size: var(--font-ui-smaller);
+	gap: 4px 14px;
+	font-size: 13px;
 }
 
 .scientific-article-card-id-label {
-	color: var(--text-faint);
-	margin-right: 4px;
-	font-weight: var(--font-semibold, 600);
+	margin-right: 6px;
+	color: var(--sac-dimmed);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.25px;
+	text-transform: uppercase;
 }
 
-.scientific-article-card-id a.external-link {
+/* Anchor */
+.scientific-article-card a.external-link:not(.scientific-article-card-title) {
+	color: var(--sac-anchor);
+	text-decoration: none;
 	background-image: none;
 	padding-right: 0;
 }
 
+.scientific-article-card a.external-link:hover {
+	text-decoration: underline;
+}
+
+/* Image radius="md" */
 .scientific-article-card-thumb {
 	order: -1; /* image on the left of the text */
 	flex: 0 0 auto;
-	width: 140px;
-	max-height: 110px;
-	border-radius: var(--radius-s, 4px);
+	width: 150px;
+	max-height: 120px;
+	border-radius: var(--sac-radius-md);
 	overflow: hidden;
-	background: var(--background-secondary);
+	background: var(--sac-thumb-bg);
 }
 
 .scientific-article-card-thumb img {
+	display: block;
 	width: 100%;
 	height: 100%;
-	max-height: 110px;
+	max-height: 120px;
 	object-fit: cover;
-	display: block;
 }
 
+/* Pill.Group */
 .scientific-article-card-keywords {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 4px;
-	margin-top: 8px;
+	gap: 6px;
+	margin-top: 14px;
 }
 
 .scientific-article-card-keyword {
-	font-size: var(--font-ui-smaller);
-	padding: 0 7px;
-	border-radius: 999px;
-	border: 1px solid var(--background-modifier-border);
-	color: var(--text-muted);
+	display: inline-flex;
+	align-items: center;
+	height: 22px;
+	padding: 0 10px;
+	border-radius: var(--sac-radius-xl);
+	background: var(--sac-pill-bg);
+	color: var(--sac-pill-color);
+	font-size: 12px;
+	white-space: nowrap;
 }
 
+/* Divider + Accordion control */
 .scientific-article-card-abstract {
-	margin-top: 8px;
-	border-top: 1px solid var(--background-modifier-border);
-	padding-top: 6px;
+	margin: 14px -16px -16px;
+	border-top: 1px solid var(--sac-border);
 }
 
 .scientific-article-card-abstract summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 16px;
 	cursor: pointer;
-	color: var(--text-muted);
-	font-weight: var(--font-semibold, 600);
-	font-size: var(--font-ui-smaller);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
+	list-style: none;
+	color: var(--sac-text);
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.scientific-article-card-abstract summary::-webkit-details-marker {
+	display: none;
+}
+
+.scientific-article-card-abstract summary:hover {
+	background: var(--sac-hover);
+}
+
+.scientific-article-card-abstract summary::after {
+	content: "";
+	width: 7px;
+	height: 7px;
+	margin-right: 4px;
+	border-right: 1.5px solid var(--sac-dimmed);
+	border-bottom: 1.5px solid var(--sac-dimmed);
+	transform: rotate(45deg);
+	transition: transform 200ms ease;
+}
+
+.scientific-article-card-abstract[open] summary::after {
+	transform: rotate(-135deg);
 }
 
 .scientific-article-card-abstract p {
-	margin: 6px 0 0;
-	color: var(--text-normal);
+	margin: 0;
+	padding: 0 16px 10px;
+	color: var(--sac-text);
+	font-size: 14px;
+}
+
+.scientific-article-card-abstract p:last-child {
+	padding-bottom: 16px;
 }
 
 .scientific-article-card-error {
@@ -167,7 +269,7 @@ a.scientific-article-card-title:hover {
 /* The image always stays on the left; on narrow cards (phone, sidebar) it just gets smaller. */
 @container scientific-article-card (max-width: 520px) {
 	.scientific-article-card-main {
-		gap: 10px;
+		gap: 12px;
 	}
 	.scientific-article-card-thumb,
 	.scientific-article-card-thumb img {

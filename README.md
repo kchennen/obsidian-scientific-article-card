@@ -38,7 +38,7 @@ abstract: "Proteins are essential to life, and understanding their structure can
 ```
 ````
 
-The block is rendered as a card with a preview image on the left (the article's first figure when available), the site icon, publication type, linked title, authors, citation, clickable DOI / PMID / PMC / arXiv links, keyword chips (the author keywords, or the MeSH terms when there are none) and a collapsible abstract (structured abstracts keep their *Background / Methods / Results* sections). Because it is plain YAML, you can edit any field by hand.
+The block is rendered as a card with a preview image on the left (the article's first figure when available), the site icon, publication type, linked title, authors, citation, clickable DOI / PMID / PMC / arXiv links, keyword chips (the author keywords, or the MeSH terms when there are none) and a collapsible abstract (structured abstracts keep their *Background / Methods / Results* sections). The card is styled after [Mantine](https://mantine.dev)'s Card component and follows Obsidian's light or dark theme. Because it is plain YAML, you can edit any field by hand.
 
 ## 🔎 Supported inputs
 
