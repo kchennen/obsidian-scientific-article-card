@@ -1721,24 +1721,52 @@ class ScientificArticleCardPlugin extends Plugin {
 			if (f) return f;
 		}
 		// no link, or a broken one (links inside code blocks aren't updated on rename): match by DOI / PMID
-		return this.findPaperNote(d.doi, d.pmid);
+		return this.findPaperNote(d.doi, d.pmid, sourcePath);
 	}
 
-	findPaperNote(doi, pmid) {
+	/**
+	 * A paper note with this DOI or PMID, looked up without listing the whole vault. Candidates:
+	 * notes just created, the notes linked from the reading list's `papers` property (Obsidian keeps those
+	 * links up to date on rename), and the markdown files of the papers folders (next to the reading list,
+	 * and the dedicated folder if one is set).
+	 */
+	findPaperNote(doi, pmid, sourcePath) {
 		if (!doi && !pmid) return null;
 		const d = doi ? String(doi).toLowerCase() : "";
 		const p = pmid ? String(pmid) : "";
+		const matches = (f) => {
+			const fm = f && (this.app.metadataCache.getFileCache(f) || {}).frontmatter;
+			return !!fm && fm.type === "paper" && ((d && fm.doi && String(fm.doi).toLowerCase() === d) || (p && fm.pmid && String(fm.pmid) === p));
+		};
 		if (!this.recentNotes) this.recentNotes = new Map();
 		for (const key of [d, p]) {
 			const f = key && this.recentNotes.get(key);
 			if (f && this.app.vault.getAbstractFileByPath(f.path)) return f;
 		}
-		for (const f of this.app.vault.getMarkdownFiles()) {
-			const fm = (this.app.metadataCache.getFileCache(f) || {}).frontmatter;
-			if (!fm || fm.type !== "paper") continue;
-			if ((d && fm.doi && String(fm.doi).toLowerCase() === d) || (p && fm.pmid && String(fm.pmid) === p)) return f;
-		}
+		for (const f of this.paperNoteCandidates(sourcePath)) if (matches(f)) return f;
 		return null;
+	}
+
+	/** Markdown files that may be paper notes for cards in `sourcePath` (no vault-wide listing). */
+	paperNoteCandidates(sourcePath) {
+		const out = [];
+		const seen = new Set();
+		const add = (f) => {
+			if (f instanceof TFile && f.extension === "md" && !seen.has(f.path)) {
+				seen.add(f.path);
+				out.push(f);
+			}
+		};
+		const list = sourcePath ? this.app.vault.getAbstractFileByPath(sourcePath) : null;
+		const fm = list instanceof TFile ? (this.app.metadataCache.getFileCache(list) || {}).frontmatter : null;
+		for (const link of asList(fm && fm.papers)) add(this.resolveLink(link, sourcePath));
+		const folders = new Set([this.paperFolder(sourcePath)]);
+		if (this.settings.paperNoteFolder) folders.add(normalizePath(this.settings.paperNoteFolder));
+		for (const path of folders) {
+			const folder = path === "/" ? this.app.vault.getRoot() : this.app.vault.getAbstractFileByPath(path);
+			for (const f of (folder && folder.children) || []) add(f);
+		}
+		return out;
 	}
 
 	paperFolder(sourcePath) {
@@ -1794,7 +1822,7 @@ class ScientificArticleCardPlugin extends Plugin {
 		if (!paper) paper = cardToPaper(card);
 		const user = card ? cardUserFields(card) : { status: "", rating: 0, tags: [], note: "" };
 
-		let file = this.findPaperNote(paper.doi || (card && card.doi), paper.pmid || (card && card.pmid));
+		let file = this.findPaperNote(paper.doi || (card && card.doi), paper.pmid || (card && card.pmid), sourcePath);
 		if (file) {
 			// already exists: merge the card's notes into it without overwriting anything
 			if (hasUserFields(user)) await this.mergeUserIntoNote(file, user);

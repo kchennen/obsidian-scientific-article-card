@@ -25,11 +25,28 @@ function createApp(initialFiles = {}) {
 		return file;
 	};
 	for (const [p, text] of Object.entries(initialFiles)) add(p, text);
+	/** A folder with its direct children, like Obsidian's TFolder. */
+	const folder = (p) => ({
+		path: p,
+		get children() {
+			return [...files.values()].map((f) => f.file).filter((f) => {
+				const dir = f.path.includes("/") ? f.path.slice(0, f.path.lastIndexOf("/")) : "/";
+				return dir === p;
+			});
+		},
+	});
 
 	const app = {
 		vault: {
-			getAbstractFileByPath: (p) => (files.has(p) ? files.get(p).file : folders.has(p) ? { path: p, children: [] } : null),
-			getMarkdownFiles: () => [...files.values()].map((f) => f.file).filter((f) => f.extension === "md"),
+			getAbstractFileByPath: (p) => (files.has(p) ? files.get(p).file : folders.has(p) ? folder(p) : null),
+			getRoot: () => folder("/"),
+			// the plugin must never list the whole vault (community review "vault enumeration")
+			getMarkdownFiles: () => {
+				throw new Error("vault enumeration: getMarkdownFiles() called");
+			},
+			getFiles: () => {
+				throw new Error("vault enumeration: getFiles() called");
+			},
 			create: async (p, text) => {
 				if (files.has(p)) throw new Error("File already exists: " + p);
 				const f = add(p, text);

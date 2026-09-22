@@ -194,17 +194,41 @@ test("paper note location: subfolder, dedicated folder", async () => {
 	assert.ok(t.vault.files.has("4_Resources/Papers/Jumper_Nature_2021.md"));
 });
 
-test("cards find their paper note by DOI/PMID: renamed note, note made elsewhere; Open note records the link", async () => {
+test("renamed paper note: found through the reading list's papers link, Open note repairs the card link", async () => {
 	const { vault, plugin, render } = await setup(`${card(ALPHAFOLD)}\n`);
-	await plugin.createPaperNote({ ident: I.identFromCard(ALPHAFOLD), card: null, sourcePath: "Elsewhere.md", block: null });
+	await plugin.createPaperNote({ ident: I.identFromCard(ALPHAFOLD), card: ALPHAFOLD, sourcePath: LIST, block: render("34265844").block });
 	plugin.recentNotes.clear();
-	vault.rename("Jumper_Nature_2021.md", "Papers/AlphaFold paper.md");
+	vault.rename(`${DIR}/Jumper_Nature_2021.md`, "Library/AlphaFold paper.md");
+	// Obsidian updates links in properties on rename (not the card's link, which sits in a code block)
+	await vault.app.fileManager.processFrontMatter(vault.file(LIST), (f) => (f.papers = ["[[AlphaFold paper]]"]));
 	const r = render("34265844");
 	assert.deepEqual(texts(r.el, ".scientific-article-card-button"), ["Open note"]);
 	r.el.querySelector(".scientific-article-card-button").click();
-	await until(() => cardFields(vault, "34265844")["paper-note"] === "[[AlphaFold paper]]" && vault.frontmatter(LIST) && vault.frontmatter(LIST).papers);
-	assert.deepEqual(vault.frontmatter("Papers/AlphaFold paper.md")["reading-lists"], ["[[Biblios]]"]);
-	assert.deepEqual(vault.frontmatter(LIST).papers, ["[[AlphaFold paper]]"]);
+	await until(() => vault.opened.includes("Library/AlphaFold paper.md"));
+	assert.equal(cardFields(vault, "34265844")["paper-note"], "[[AlphaFold paper]]");
+});
+
+test("paper note in the papers folder without any link (e.g. made by command): found by DOI, linked on Open note", async () => {
+	const { vault, plugin, render } = await setup(`${card(ALPHAFOLD)}\n`);
+	await plugin.createPaperNote({ ident: I.identFromCard(ALPHAFOLD), card: null, sourcePath: LIST, block: null });
+	plugin.recentNotes.clear();
+	const r = render("34265844");
+	assert.deepEqual(texts(r.el, ".scientific-article-card-button"), ["Open note"]);
+	r.el.querySelector(".scientific-article-card-button").click();
+	await until(() => vault.frontmatter(LIST) && vault.frontmatter(LIST).papers);
+	assert.equal(cardFields(vault, "34265844")["paper-note"], "[[Jumper_Nature_2021]]");
+	assert.deepEqual(vault.frontmatter(`${DIR}/Jumper_Nature_2021.md`)["reading-lists"], ["[[Biblios]]"]);
+});
+
+test("the lookup never lists the whole vault: an unlinked note in an unrelated folder isn't found", async () => {
+	const { vault, plugin, render } = await setup(`${card(ALPHAFOLD)}\n`);
+	await plugin.createPaperNote({ ident: I.identFromCard(ALPHAFOLD), card: null, sourcePath: "Elsewhere/Other.md", block: null });
+	plugin.recentNotes.clear();
+	assert.ok(vault.files.has("Elsewhere/Jumper_Nature_2021.md"));
+	assert.deepEqual(texts(render("34265844").el, ".scientific-article-card-button"), ["Create note"]);
+	// with a dedicated folder, every paper note is found from any reading list
+	plugin.settings.paperNoteFolder = "Elsewhere";
+	assert.deepEqual(texts(render("34265844").el, ".scientific-article-card-button"), ["Open note"]);
 });
 
 test("Refresh command keeps your properties and text; legacy paper-note block still renders", async () => {

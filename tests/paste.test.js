@@ -79,6 +79,11 @@ test("settings: paste enhancement off, bare PMIDs on", async () => {
 	assert.deepEqual(calls, [{ id: "pmid:34265844", range: [7, 15] }]);
 });
 
+test("the plugin never lists the whole vault (community review: vault enumeration)", () => {
+	const src = fs.readFileSync(path.join(__dirname, "..", "main.js"), "utf8");
+	assert.doesNotMatch(src, /getMarkdownFiles|getFiles\(|getAllLoadedFiles/);
+});
+
 test("the plugin never touches the system clipboard", () => {
 	const src = fs.readFileSync(path.join(__dirname, "..", "main.js"), "utf8");
 	assert.doesNotMatch(src, /clipboard/i);
