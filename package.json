@@ -1,0 +1,20 @@
+{
+	"name": "obsidian-scientific-article-card",
+	"version": "1.9.1",
+	"description": "Obsidian plugin: turn a PMID, DOI, arXiv ID or article URL into a scientific article card.",
+	"main": "main.js",
+	"private": true,
+	"scripts": {
+		"build": "node --check main.js",
+		"test": "node --test tests/*.test.js",
+		"record-fixtures": "node tests/fixtures/record.js"
+	},
+	"author": "Kirsley Chennen",
+	"license": "MIT",
+	"devDependencies": {
+		"@codemirror/state": "^6.4.1",
+		"@codemirror/view": "^6.26.0",
+		"js-yaml": "^4.1.0",
+		"jsdom": "^24.0.0"
+	}
+}

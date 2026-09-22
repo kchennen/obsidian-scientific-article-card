@@ -1,0 +1,66 @@
+{
+  "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=34265844&retmode=xml": {
+    "status": 200,
+    "file": "r01.xml"
+  },
+  "https://pmc-oa-opendata.s3.amazonaws.com/?list-type=2&max-keys=1000&prefix=PMC8371605.": {
+    "status": 200,
+    "file": "r09.xml"
+  },
+  "https://pmc-oa-opendata.s3.amazonaws.com/PMC8371605.2/PMC8371605.2.xml": {
+    "status": 200,
+    "file": "r10.xml"
+  },
+  "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=38520562&retmode=xml": {
+    "status": 200,
+    "file": "r04.xml"
+  },
+  "https://pmc-oa-opendata.s3.amazonaws.com/?list-type=2&max-keys=1000&prefix=PMC11976766.": {
+    "status": 200,
+    "file": "r05.xml"
+  },
+  "https://pmc-oa-opendata.s3.amazonaws.com/PMC11976766.1/PMC11976766.1.xml": {
+    "status": 200,
+    "file": "r06.xml"
+  },
+  "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=33308477&retmode=xml": {
+    "status": 200,
+    "file": "r07.xml"
+  },
+  "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=PMCID%3APMC8371605&format=json&resultType=core&pageSize=5": {
+    "status": 200,
+    "file": "r08.json"
+  },
+  "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1371%2Fjournal.pone.0012345%22&format=json&resultType=core&pageSize=5": {
+    "status": 200,
+    "file": "r11.json"
+  },
+  "https://pmc-oa-opendata.s3.amazonaws.com/?list-type=2&max-keys=1000&prefix=PMC2925956.": {
+    "status": 200,
+    "file": "r12.xml"
+  },
+  "https://pmc-oa-opendata.s3.amazonaws.com/PMC2925956.1/PMC2925956.1.xml": {
+    "status": 200,
+    "file": "r13.xml"
+  },
+  "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1101%2F2023.01.02.522505%22&format=json&resultType=core&pageSize=5": {
+    "status": 200,
+    "file": "r14.json"
+  },
+  "https://api.crossref.org/works/10.1101%2F2023.01.02.522505": {
+    "status": 200,
+    "file": "r15.json"
+  },
+  "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI%3A%2210.1145%2F3292500.3330701%22&format=json&resultType=core&pageSize=5": {
+    "status": 200,
+    "file": "r16.json"
+  },
+  "https://api.crossref.org/works/10.1145%2F3292500.3330701": {
+    "status": 200,
+    "file": "r17.json"
+  },
+  "https://export.arxiv.org/api/query?id_list=1706.03762": {
+    "status": 200,
+    "file": "r18.xml"
+  }
+}

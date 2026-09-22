@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<article xmlns:xlink="http://www.w3.org/1999/xlink"><body>
+<disp-formula id="Equ1"><label>1</label><alternatives><tex-math id="d33e489">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$Sim_{BMA} \left( {g1,g2} \right) = \frac{{\mathop \sum \nolimits_{i = 1}^{m} max_{1 \le j \le n} s_{ij} + \mathop \sum \nolimits_{j = 1}^{n} max_{1 \le i \le m} s_{ij} }}{m + n}$$\end{document}</tex-math><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="d33e495" display="block"><mml:mrow><mml:mi>S</mml:mi><mml:mi>i</mml:mi><mml:msub><mml:mi>m</mml:mi><mml:mrow><mml:mi mathvariant="italic">BMA</mml:mi></mml:mrow></mml:msub><mml:mfenced close=")" open="("><mml:mrow><mml:mi>g</mml:mi><mml:mn>1</mml:mn><mml:mo>,</mml:mo><mml:mi>g</mml:mi><mml:mn>2</mml:mn></mml:mrow></mml:mfenced><mml:mo>=</mml:mo><mml:mfrac><mml:mrow><mml:msubsup><mml:mo>∑</mml:mo><mml:mrow><mml:mi>i</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>m</mml:mi></mml:msubsup><mml:mi>m</mml:mi><mml:mi>a</mml:mi><mml:msub><mml:mi>x</mml:mi><mml:mrow><mml:mn>1</mml:mn><mml:mo>≤</mml:mo><mml:mi>j</mml:mi><mml:mo>≤</mml:mo><mml:mi>n</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mi>s</mml:mi><mml:mrow><mml:mi mathvariant="italic">ij</mml:mi></mml:mrow></mml:msub><mml:mo>+</mml:mo><mml:msubsup><mml:mo>∑</mml:mo><mml:mrow><mml:mi>j</mml:mi><mml:mo>=</mml:mo><mml:mn>1</mml:mn></mml:mrow><mml:mi>n</mml:mi></mml:msubsup><mml:mi>m</mml:mi><mml:mi>a</mml:mi><mml:msub><mml:mi>x</mml:mi><mml:mrow><mml:mn>1</mml:mn><mml:mo>≤</mml:mo><mml:mi>i</mml:mi><mml:mo>≤</mml:mo><mml:mi>m</mml:mi></mml:mrow></mml:msub><mml:msub><mml:mi>s</mml:mi><mml:mrow><mml:mi mathvariant="italic">ij</mml:mi></mml:mrow></mml:msub></mml:mrow><mml:mrow><mml:mi>m</mml:mi><mml:mo>+</mml:mo><mml:mi>n</mml:mi></mml:mrow></mml:mfrac></mml:mrow></mml:math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="439_2023_2638_Article_Equ1.gif"/></alternatives></disp-formula>
+<fig id="Fig1" position="float" orientation="portrait"><label>Fig. 1</label><caption><p>Workflow of the “Suggested Diagnosis” model</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO1" position="float" orientation="portrait" xlink:href="439_2023_2638_Fig1_HTML.jpg"/></fig>
+<disp-formula id="Equa"><alternatives><tex-math id="d33e733">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$rel\left( x \right) = 1 - \frac{{m_{x} }}{m}$$\end{document}</tex-math><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="d33e738" display="block"><mml:mrow><mml:mi>r</mml:mi><mml:mi>e</mml:mi><mml:mi>l</mml:mi><mml:mfenced close=")" open="("><mml:mi>x</mml:mi></mml:mfenced><mml:mo>=</mml:mo><mml:mn>1</mml:mn><mml:mo>-</mml:mo><mml:mfrac><mml:msub><mml:mi>m</mml:mi><mml:mi>x</mml:mi></mml:msub><mml:mi>m</mml:mi></mml:mfrac></mml:mrow></mml:math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="439_2023_2638_Article_Equa.gif"/></alternatives></disp-formula>
+<inline-formula id="IEq1"><alternatives><tex-math id="d33e755">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$${m}_{x}$$\end{document}</tex-math><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="d33e760"><mml:msub><mml:mi>m</mml:mi><mml:mi>x</mml:mi></mml:msub></mml:math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="439_2023_2638_Article_IEq1.gif"/></alternatives></inline-formula>
+<inline-formula id="IEq2"><alternatives><tex-math id="d33e767">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$m$$\end{document}</tex-math><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" id="d33e772"><mml:mi>m</mml:mi></mml:math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="439_2023_2638_Article_IEq2.gif"/></alternatives></inline-formula>
+<fig id="Fig2" position="float" orientation="portrait"><label>Fig. 2</label><caption><p>Cumulative distribution function (CDF) of phenotype-based prioritization performances on 35 training set samples. PhenoScore represents the implementation of the Phenotypic Similarity score described in the Methods section</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO2" position="float" orientation="portrait" xlink:href="439_2023_2638_Fig2_HTML.jpg"/></fig>
+<fig id="Fig3" position="float" orientation="portrait"><label>Fig. 3</label><caption><p>Percentage of causative variants in the training set (<italic toggle="yes">n</italic> = 35 solved patients) with their interpretation according to the ACMG/AMP guidelines as implemented in the eVai software (enGenome srl, Pavia)</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO3" position="float" orientation="portrait" xlink:href="439_2023_2638_Fig3_HTML.jpg"/></fig>
+<fig id="Fig4" position="float" orientation="portrait"><label>Fig. 4</label><caption><p>Distribution of pathogenicity score and phenotypic similarity score for causative and non-causative variants in training</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO4" position="float" orientation="portrait" xlink:href="439_2023_2638_Fig4_HTML.jpg"/></fig>
+<fig id="Fig5" position="float" orientation="portrait"><label>Fig. 5</label><caption><p>Cumulative Distribution Function (CDF) calculated with the LOPO CV on the training set</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO5" position="float" orientation="portrait" xlink:href="439_2023_2638_Fig5_HTML.jpg"/></fig>
+<fig id="Fig6" position="float" orientation="portrait"><label>Fig. 6</label><caption><p>Histogram showing the percentage of variants in each test proband with reliability equal to 1. Both solved and unsolved test cases show high similarity with the training set in terms of our built-in features</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO6" position="float" orientation="portrait" xlink:href="439_2023_2638_Fig6_HTML.jpg"/></fig>
+<fig id="Fig7" position="float" orientation="portrait"><label>Fig. 7</label><caption><p>Number of causative variants in the DDD dataset ranked at different positions</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO7" position="float" orientation="portrait" xlink:href="439_2023_2638_Fig7_HTML.jpg"/></fig>
+<fig id="Fig8" position="float" orientation="portrait"><label>Fig. 8</label><caption><p>Cumulative Distribution Function (CDF) calculated on 85 DDD samples comparing Model to, eVai pathogenicity score and to phenotype-based only prioritization</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO8" position="float" orientation="portrait" xlink:href="439_2023_2638_Fig8_HTML.jpg"/></fig>
+</body></article>

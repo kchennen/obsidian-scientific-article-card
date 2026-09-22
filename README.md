@@ -3,6 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/kchennen/obsidian-scientific-article-card?label=release&color=7c3aed)](https://github.com/kchennen/obsidian-scientific-article-card/releases/latest)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.4.0%2B-483699?logo=obsidian&logoColor=white)](https://obsidian.md)
 [![Downloads](https://img.shields.io/github/downloads/kchennen/obsidian-scientific-article-card/total?label=downloads&color=2ea043)](https://github.com/kchennen/obsidian-scientific-article-card/releases)
+[![Tests](https://img.shields.io/github/actions/workflow/status/kchennen/obsidian-scientific-article-card/test.yml?label=tests)](https://github.com/kchennen/obsidian-scientific-article-card/actions/workflows/test.yml)
 [![Release build](https://img.shields.io/github/actions/workflow/status/kchennen/obsidian-scientific-article-card/release.yml?label=release%20build)](https://github.com/kchennen/obsidian-scientific-article-card/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/github/license/kchennen/obsidian-scientific-article-card?color=blue)](LICENSE)
 [![Data sources](https://img.shields.io/badge/data-PubMed%20%C2%B7%20Europe%20PMC%20%C2%B7%20Crossref%20%C2%B7%20arXiv-0b7285)](#-network-use)
@@ -179,6 +180,32 @@ Release files (`main.js`, `styles.css`, `manifest.json`) are built by GitHub Act
 ```bash
 gh attestation verify main.js --repo kchennen/obsidian-scientific-article-card
 ```
+
+## 🧪 Development
+
+The plugin is plain JavaScript (`main.js`, `styles.css`) with no build step. Tests use Node's built-in test runner:
+
+```bash
+npm install
+npm test
+```
+
+They run offline: API answers (PubMed, Europe PMC, Crossref, arXiv, PMC figures) are recorded in `tests/fixtures` and replayed, and Obsidian is replaced by an in-memory vault (`tests/helpers`). What they cover:
+
+| File | Behaviour |
+| --- | --- |
+| `identifiers.test.js` | PMID, PMCID, DOI, arXiv and URL parsing, DOI clean-up |
+| `text.test.js` | abstracts: super/subscripts, section labels, JATS |
+| `format.test.js` | authors, citation, code block YAML, Markdown template |
+| `fields.test.js` | card notes fields, tags, finding and rewriting a card, merging notes |
+| `paper-notes.test.js` | file names, properties, body, refresh rules, `Papers.base` |
+| `render.test.js` | the card: sections, buttons, linked cards, warning strip, colors |
+| `styles.test.js` | CSS variables and color classes defined, image on the left, no uppercase keywords |
+| `resolver.test.js` | every lookup path, preview images, keyword fallback, main link |
+| `paste.test.js` | paste detection on real CodeMirror transactions, no clipboard access |
+| `flows.test.js` | inserting cards, your notes, Create/Open note, backlinks, duplicates, renames, refresh, commands |
+
+Tests run on every push, and a release is only published if they pass. When an API changes its format, re-record the fixtures with `npm run record-fixtures`. Add a test with each new feature or bug fix.
 
 ## 📦 Installation
 
