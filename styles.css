@@ -390,6 +390,35 @@
 	border-top: 1px solid var(--sac-border);
 }
 
+.scientific-article-card-mine-source {
+	margin: 0 4px 0 -4px;
+	color: var(--sac-dimmed);
+	font-size: 12px;
+	font-style: italic;
+}
+
+/* Alert variant="light" color="orange": a linked card that still has notes of its own */
+.scientific-article-card-conflict {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 12px;
+	margin: 12px 0 0;
+	padding: 10px 12px;
+	border-radius: var(--sac-radius-md);
+	background: var(--sac-orange-bg);
+	color: var(--sac-text);
+	font-size: 13px;
+}
+
+.scientific-article-card .scientific-article-card-button.is-warning {
+	background: var(--sac-orange-bg);
+	color: var(--sac-orange-fg);
+	outline: 1px solid var(--sac-orange-fg);
+	outline-offset: -1px;
+}
+
 .scientific-article-card-mine-row {
 	display: flex;
 	flex-wrap: wrap;

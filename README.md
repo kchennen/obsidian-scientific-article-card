@@ -107,9 +107,10 @@ For papers you work with, create **one note per paper** with the **Create note**
 
 - **Name**: `FirstAuthor_JournalAbbreviation_Year`, e.g. `Jumper_Nature_2021`, `Zucca_HumGenet_2025`. A different paper with the same name gets `…2025a`, `…2025b`, and so on. If a paper note with the same DOI or PMID already exists, it is reused.
 - **Location**: next to the note with the card (optionally in a subfolder), or in one dedicated folder. See the settings.
-- **Content**: the properties (`type: paper`, `title`, `authors`, `journal`, `year`, `doi`, `pmid`, `pmcid`, `url`, `image`, `publication-type`, `keywords`, `status`, `rating`, `tags`, `created`), a card drawn from them — the ```` ```paper-note ```` code block at the top, which the plugin renders as the card (if you see it as plain text, the plugin isn't running), the abstract, and a *Notes* section.
-- **Your notes move with it**: the card's status, rating and tags become the note's properties, and its note goes into *Notes*.
-- **Reading lists keep their cards**: the card gets a `paper-note` link, its button becomes **Open note**, and its *Your notes* section shows the paper note's status, rating and tags. The ✏️ button edits the paper note's properties.
+- **Content**: the properties (`type: paper`, `title`, `authors`, `journal`, `year`, `doi`, `pmid`, `pmcid`, `url`, `image`, `publication-type`, `keywords`, `status`, `rating`, `summary`, `tags`, `created`), a card drawn from them — the ```` ```paper-note ```` code block at the top, which the plugin renders as the card (if you see it as plain text, the plugin isn't running), the abstract, and a *Notes* section.
+- **Your notes move with it**: the card's status, rating and tags become the note's properties, and its note becomes the `summary` property. The paper note is then the single place for your notes: write longer notes in its *Notes* section.
+- **Reading lists keep their cards**: the card gets a `paper-note` link, its button becomes **Open note**, and its *Your notes* section shows the paper note's status, rating, tags and summary (labelled *in Meyer_JNeuromusculDis_2024*). The ✏️ button edits them in the paper note. A card finds its paper note by DOI or PMID too, so it still works if the link is missing or broken, and **Open note** repairs the link.
+- **Leftover card notes**: if a linked card still has its own `status`, `rating`, `tags` or `note` (for example added by hand), the card says so in an orange strip with **Move to paper note**. Moving never overwrites: the paper note's values win, tags are combined, and a note that differs from the summary is added to *Notes*.
 - **Backlinks**: the paper note and the reading list link to each other through properties — `reading-lists: ["[[Biblios]]"]` in the paper note and `papers: ["[[Zucca_HumGenet_2025]]"]` in the reading list — so each shows in the other's backlinks and on the graph, and Obsidian updates them when you rename a note. For cards linked before version 1.8, run *Link cards and paper notes in this note (backlinks)* in the reading list.
 
 **Refresh paper metadata**: in a paper note, use the **Refresh** button on its card or the *Refresh paper metadata* command to fetch the paper again (for example after a preprint is published, or when a figure becomes available). It updates only the fetched properties — title, authors, journal, year, volume, issue, pages, identifiers, URL, image, publication type and keywords — and never your `status`, `rating`, `tags`, `created`, other properties or the note's text. An empty result keeps the old value.
@@ -137,6 +138,7 @@ doi: 10.1038/s41586-021-03819-2
 pmid: "34265844"
 status: to-read
 rating: 4
+summary: Compare with ESMFold on our cohort.
 tags: [impatient2, methods]
 ```
 
