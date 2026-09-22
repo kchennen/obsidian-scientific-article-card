@@ -76,9 +76,30 @@ Markdown links (`[text](url)`) and `<url>` are accepted too. Trailing `/full`, `
 
   Wrap text in `{{#key}}…{{/key}}` to include it only when `key` has a value.
 
+## 📝 Your notes
+
+Add your own reading status, rating, tags and a note to any card: select the ✏️ button in the card's header, fill in the form and save. They appear in a separate *Your notes* section, so what you wrote stays apart from the fetched metadata.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/notes-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/notes-light.png">
+  <img alt="Card with a Your notes section: a To read status, a 4-star rating, the tags #impatient2 and #methods, and a short note" src="https://raw.githubusercontent.com/kchennen/obsidian-scientific-article-card/HEAD/images/notes-light.png">
+</picture>
+
+They are stored as extra fields in the card, which you can also edit by hand:
+
+```yaml
+status: "to-read"        # to-read, reading or read
+rating: 4                # 1 to 5
+tags: ["impatient2", "methods"]
+note: "Compare with ESMFold on our cohort."
+```
+
+**Tags in Obsidian.** Obsidian doesn't index tags inside code blocks. With *Add card tags to the note's tags* on (the default), saving notes also adds the card's tags to the note's `tags` property, so the tag pane, search, Dataview and Bases find the note. Removing a tag from a card doesn't remove it from the property, since you may use it elsewhere in the note.
+
 ## ⚙️ Settings
 
-Main link target (what you pasted / DOI / PubMed), author format (`Smith JA` or `John A. Smith`), maximum authors before *et al.*, include abstract / keywords / MeSH terms, fetch preview image, expand abstract by default, publisher domains for paste, contact email and NCBI API key.
+Main link target (what you pasted / DOI / PubMed), author format (`Smith JA` or `John A. Smith`), maximum authors before *et al.*, include abstract / keywords / MeSH terms, fetch preview image, expand abstract by default, add card tags to the note's tags, publisher domains for paste, contact email and NCBI API key.
 
 ## 🌐 Network use
 

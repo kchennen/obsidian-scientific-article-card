@@ -18,6 +18,8 @@ const {
 	requestUrl,
 	parseYaml,
 	editorInfoField,
+	setIcon,
+	TFile,
 } = obsidian;
 const { EditorView } = require("@codemirror/view");
 
@@ -59,6 +61,7 @@ const DEFAULT_SETTINGS = {
 	maxAuthors: 10,
 	authorFormat: "short", // "short" (Smith JA) | "full" (John A. Smith)
 	abstractOpen: false,
+	syncTags: true,
 	showInMenu: true,
 	email: "",
 	ncbiApiKey: "",
@@ -827,7 +830,62 @@ function externalLink(parent, text, href, cls) {
 	return a;
 }
 
-function renderCard(source, el, settings) {
+/* ------------------------------------------------------------------ */
+/* Personal notes: status, rating, tags, note (stored in the card)     */
+/* ------------------------------------------------------------------ */
+
+const USER_KEYS = ["status", "rating", "tags", "note"];
+const STATUSES = { "to-read": "To read", reading: "Reading", read: "Read" };
+
+/** Obsidian tag rules: no "#", no spaces, letters/digits/_/-// only, not all digits. */
+function normalizeTag(t) {
+	return String(t)
+		.trim()
+		.replace(/^#+/, "")
+		.replace(/\s+/g, "-")
+		.replace(/[^\p{L}\p{N}_\-/]/gu, "");
+}
+
+function parseTags(v) {
+	const list = Array.isArray(v) ? v : String(v == null ? "" : v).split(/[,\s]+/);
+	return uniq(list.map(normalizeTag).filter((t) => t && /\D/.test(t)));
+}
+
+/** Replace the user fields in a card's YAML lines, keeping everything else untouched. */
+function setUserFields(lines, v) {
+	const out = [];
+	let skipping = false;
+	for (const l of lines) {
+		const m = l.match(/^([A-Za-z_][\w-]*)\s*:/);
+		if (m) skipping = USER_KEYS.includes(m[1]);
+		else if (!/^[\s-]/.test(l)) skipping = false;
+		if (!skipping) out.push(l);
+	}
+	while (out.length && !out[out.length - 1].trim()) out.pop();
+	if (v.status) out.push(`status: ${JSON.stringify(v.status)}`);
+	if (v.rating) out.push(`rating: ${v.rating}`);
+	if (v.tags && v.tags.length) out.push(`tags: ${JSON.stringify(v.tags)}`);
+	if (v.note && v.note.trim()) out.push(`note: ${JSON.stringify(v.note.trim())}`);
+	return out;
+}
+
+/** Find the ```paper block whose content is `source`, closest to `hintLine`. Returns [start, end] line indexes. */
+function findBlock(lines, source, hintLine) {
+	let best = null;
+	for (let i = 0; i < lines.length; i++) {
+		if (!new RegExp("^```" + CODE_BLOCK_LANG + "\\s*$").test(lines[i])) continue;
+		let j = i + 1;
+		while (j < lines.length && !/^```\s*$/.test(lines[j])) j++;
+		if (j >= lines.length) break;
+		if (lines.slice(i + 1, j).join("\n").trimEnd() === source.trimEnd()) {
+			if (!best || Math.abs(i - hintLine) < Math.abs(best[0] - hintLine)) best = [i, j];
+		}
+		i = j;
+	}
+	return best;
+}
+
+function renderCard(source, el, settings, onEdit) {
 	let d;
 	try {
 		d = parseYaml(source) || {};
@@ -835,6 +893,7 @@ function renderCard(source, el, settings) {
 		el.createDiv({ cls: "scientific-article-card-error", text: `Scientific Article Card: invalid YAML — ${e.message}` });
 		return;
 	}
+	const userTags = parseTags(d.tags);
 	for (const k of Object.keys(d)) d[k] = d[k] == null ? "" : String(d[k]);
 	if (!d.title && !d.url) {
 		el.createDiv({ cls: "scientific-article-card-error", text: "Scientific Article Card: a `title` or `url` is required." });
@@ -852,6 +911,19 @@ function renderCard(source, el, settings) {
 	}
 	if (d.host) header.createSpan({ cls: "scientific-article-card-host", text: d.host });
 	if (d.type) header.createSpan({ cls: "scientific-article-card-badge", text: d.type });
+	if (onEdit) {
+		const btn = header.createEl("button", {
+			cls: "scientific-article-card-edit clickable-icon",
+			attr: { type: "button", "aria-label": "Edit notes" },
+		});
+		if (setIcon) setIcon(btn, "pencil");
+		else btn.setText("Edit");
+		btn.addEventListener("click", (evt) => {
+			evt.preventDefault();
+			evt.stopPropagation();
+			onEdit();
+		});
+	}
 
 	if (d.url) externalLink(body, d.title || d.url, d.url, "scientific-article-card-title");
 	else body.createDiv({ cls: "scientific-article-card-title", text: d.title });
@@ -884,6 +956,29 @@ function renderCard(source, el, settings) {
 	if (d.keywords) {
 		const kw = card.createDiv({ cls: "scientific-article-card-keywords" });
 		for (const k of d.keywords.split(/\s*;\s*/).filter(Boolean)) kw.createSpan({ cls: "scientific-article-card-keyword", text: k });
+	}
+
+	const rating = Math.max(0, Math.min(5, parseInt(d.rating, 10) || 0));
+	if (d.status || rating || userTags.length || d.note) {
+		const mine = card.createDiv({ cls: "scientific-article-card-mine" });
+		const row = mine.createDiv({ cls: "scientific-article-card-mine-row" });
+		row.createSpan({ cls: "scientific-article-card-mine-label", text: "Your notes" });
+		if (d.status) {
+			const known = STATUSES[d.status] ? ` is-${d.status}` : "";
+			row.createSpan({ cls: "scientific-article-card-status" + known, text: STATUSES[d.status] || d.status });
+		}
+		if (rating) {
+			row.createSpan({
+				cls: "scientific-article-card-rating",
+				text: "★".repeat(rating) + "☆".repeat(5 - rating),
+				attr: { "aria-label": `Rated ${rating} out of 5` },
+			});
+		}
+		for (const t of userTags) row.createSpan({ cls: "scientific-article-card-tag", text: "#" + t });
+		if (d.note) {
+			const note = mine.createDiv({ cls: "scientific-article-card-note" });
+			for (const para of d.note.split(/\n{2,}/)) note.createEl("p", { text: para });
+		}
 	}
 
 	if (d.abstract) {
@@ -937,6 +1032,55 @@ class IdentifierModal extends Modal {
 	}
 }
 
+class NotesModal extends Modal {
+	constructor(app, title, values, onSubmit) {
+		super(app);
+		this.paperTitle = title;
+		this.values = values;
+		this.onSubmit = onSubmit;
+	}
+	onOpen() {
+		const { contentEl } = this;
+		const v = Object.assign({}, this.values);
+		this.titleEl.setText("Your notes");
+		if (this.paperTitle) contentEl.createEl("p", { cls: "setting-item-description", text: this.paperTitle });
+		new Setting(contentEl).setName("Status").addDropdown((dd) => {
+			dd.addOption("", "None");
+			for (const [k, label] of Object.entries(STATUSES)) dd.addOption(k, label);
+			dd.setValue(v.status || "").onChange((x) => (v.status = x));
+		});
+		new Setting(contentEl).setName("Rating").addDropdown((dd) => {
+			dd.addOption("0", "No rating");
+			for (let i = 1; i <= 5; i++) dd.addOption(String(i), "★".repeat(i));
+			dd.setValue(String(v.rating || 0)).onChange((x) => (v.rating = Number(x)));
+		});
+		new Setting(contentEl)
+			.setName("Tags")
+			.setDesc("Separated by commas or spaces, without #.")
+			.addText((t) => t.setPlaceholder("impatient2, methods").setValue(v.tags.join(", ")).onChange((x) => (v.tags = parseTags(x))));
+		contentEl.createEl("div", { cls: "setting-item-name", text: "Note" });
+		const note = contentEl.createEl("textarea", { cls: "scientific-article-card-note-input", attr: { rows: 6 } });
+		note.value = v.note || "";
+		note.addEventListener("input", () => (v.note = note.value));
+		const submit = () => {
+			this.close();
+			this.onSubmit(v);
+		};
+		note.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+				e.preventDefault();
+				submit();
+			}
+		});
+		new Setting(contentEl)
+			.addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
+			.addButton((b) => b.setButtonText("Save").setCta().onClick(submit));
+	}
+	onClose() {
+		this.contentEl.empty();
+	}
+}
+
 /* ------------------------------------------------------------------ */
 /* Plugin                                                              */
 /* ------------------------------------------------------------------ */
@@ -945,7 +1089,9 @@ class ScientificArticleCardPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		this.registerMarkdownCodeBlockProcessor(CODE_BLOCK_LANG, (source, el) => renderCard(source, el, this.settings));
+		this.registerMarkdownCodeBlockProcessor(CODE_BLOCK_LANG, (source, el, ctx) =>
+			renderCard(source, el, this.settings, () => this.editNotes(source, el, ctx))
+		);
 
 		this.addCommand({
 			id: "convert-selection-to-scientific-article-card",
@@ -996,6 +1142,59 @@ class ScientificArticleCardPlugin extends Plugin {
 
 	parse(text, allowBare) {
 		return parseIdentifier(text, { allowBare, domains: this.domains() });
+	}
+
+	editNotes(source, el, ctx) {
+		let d;
+		try {
+			d = parseYaml(source) || {};
+		} catch (e) {
+			new Notice("Scientific Article Card: fix the card's YAML before editing notes");
+			return;
+		}
+		const values = {
+			status: STATUSES[d.status] ? d.status : "",
+			rating: Math.max(0, Math.min(5, parseInt(d.rating, 10) || 0)),
+			tags: parseTags(d.tags),
+			note: d.note == null ? "" : String(d.note),
+		};
+		new NotesModal(this.app, d.title ? String(d.title) : "", values, (v) => this.saveNotes(source, el, ctx, v)).open();
+	}
+
+	async saveNotes(source, el, ctx, v) {
+		const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+		if (!(file instanceof TFile)) return;
+		const info = ctx.getSectionInfo(el);
+		const hint = info ? info.lineStart : 0;
+		// make sure pending edits in an open editor are on disk before rewriting the file
+		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+			if (leaf.view.file && leaf.view.file.path === file.path && typeof leaf.view.save === "function") await leaf.view.save();
+		}
+		let found = true;
+		await this.app.vault.process(file, (text) => {
+			const lines = text.split("\n");
+			const block = findBlock(lines, source, hint);
+			if (!block) {
+				found = false;
+				return text;
+			}
+			const [start, end] = block;
+			const inner = setUserFields(lines.slice(start + 1, end), v);
+			lines.splice(start + 1, end - start - 1, ...inner);
+			return lines.join("\n");
+		});
+		if (!found) {
+			new Notice("Scientific Article Card: couldn't find this card in the note. Try again after it re-renders.");
+			return;
+		}
+		if (this.settings.syncTags && v.tags.length) {
+			// mirror card tags into the note's "tags" property so Obsidian indexes them
+			await this.app.fileManager.processFrontMatter(file, (fm) => {
+				const current = parseTags(fm.tags);
+				const missing = v.tags.filter((t) => !current.some((c) => c.toLowerCase() === t.toLowerCase()));
+				if (missing.length) fm.tags = current.concat(missing);
+			});
+		}
 	}
 
 	onEditorUpdate(update) {
@@ -1236,6 +1435,13 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 		toggle("Fetch preview image", "Load the publisher page to grab its og:image. Some publishers block this; it is skipped silently.", "fetchImage");
 		toggle("Expand abstract by default", "For the card view.", "abstractOpen");
 
+		new Setting(containerEl).setName("Your notes").setHeading();
+		toggle(
+			"Add card tags to the note's tags",
+			"Tags inside a card aren't seen by Obsidian. When you save notes with tags, they are also added to the note's tags property, so the tag pane, search, Dataview and Bases find them. Removing a tag from a card doesn't remove it from the property.",
+			"syncTags"
+		);
+
 		new Setting(containerEl).setName("Paste").setHeading();
 		toggle("Enhance default paste", "Pasting a PubMed/PMC/DOI/arXiv link, a DOI, “PMID: …” or a URL from the domains below turns into an article card once it lands in the note. Other URLs are left alone.", "enhancePaste");
 		toggle("Treat pasted bare numbers as PMIDs", "Pasting just “34265844” creates a card. Off by default to avoid surprises.", "pasteBarePmid");
@@ -1276,4 +1482,4 @@ class ScientificArticleCardSettingTab extends PluginSettingTab {
 module.exports = ScientificArticleCardPlugin;
 module.exports.default = ScientificArticleCardPlugin;
 // exposed for testing
-module.exports._internals = { toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };
+module.exports._internals = { parseTags, setUserFields, findBlock, renderCard, toScript, parseIdentifier, cleanDoi, htmlToText, Resolver, toFields, toCodeBlock, fillTemplate, DEFAULT_SETTINGS };
