@@ -7,6 +7,7 @@
 	font-size: var(--font-ui-small);
 	line-height: 1.45;
 	overflow: hidden;
+	container: scientific-article-card / inline-size;
 }
 
 .scientific-article-card-main {
@@ -25,6 +26,7 @@
 
 .scientific-article-card-header {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 6px;
 	color: var(--text-muted);
@@ -161,15 +163,14 @@ a.scientific-article-card-title:hover {
 	font-size: var(--font-ui-smaller);
 }
 
-@media (max-width: 480px) {
+/* The image always stays on the right; on narrow cards (phone, sidebar) it just gets smaller. */
+@container scientific-article-card (max-width: 520px) {
 	.scientific-article-card-main {
-		flex-direction: column-reverse;
+		gap: 10px;
 	}
-	.scientific-article-card-thumb {
-		width: 100%;
-		max-height: 160px;
-	}
+	.scientific-article-card-thumb,
 	.scientific-article-card-thumb img {
-		max-height: 160px;
+		width: 88px;
+		max-height: 88px;
 	}
 }
