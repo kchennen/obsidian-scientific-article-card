@@ -24,6 +24,7 @@ const { EditorView } = require("@codemirror/view");
 const CODE_BLOCK_LANG = "paper";
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const EUROPEPMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search";
+const PUBMED_IMAGE = "https://cdn.ncbi.nlm.nih.gov/pubmed/persistent/pubmed-meta-image-v2.jpg";
 
 const DEFAULT_TEMPLATE = [
 	"> [!abstract]- [{{title}}]({{url}})",
@@ -696,6 +697,8 @@ class Resolver {
 				}
 			}
 		}
+		// Default for PubMed-indexed articles without a figure: PubMed's own preview image.
+		if (s.fetchImage && !p.image && p.pmid) p.image = PUBMED_IMAGE;
 
 		if (!p.landingHost && p.landing) p.landingHost = hostOf(p.landing);
 		let host = hostOf(p.url);

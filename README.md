@@ -90,6 +90,7 @@ This plugin makes network requests **only when you convert an identifier** into 
 - [arXiv API](https://info.arxiv.org/help/api/index.html) — arXiv preprints
 - the [PMC Open Access dataset on AWS](https://registry.opendata.aws/ncbi-pmc/) (`pmc-oa-opendata.s3.amazonaws.com`) — the first figure of articles available in PubMed Central, used as the preview image
 - the article's own page (the URL you pasted, or its `doi.org` landing page) — to read citation meta tags, and the preview image when the article is not in PMC
+- the NCBI CDN (`cdn.ncbi.nlm.nih.gov`) — PubMed's preview image, shown when no figure is available for a PubMed article
 - Google's favicon service (`www.google.com/s2/favicons`) — the site icon displayed on the card, loaded when the card is rendered
 
 If you enter a contact email or NCBI API key in the settings, they are sent to NCBI (and the email to Crossref) as recommended by their usage policies. No other data is collected or transmitted, and there is no telemetry.
@@ -119,7 +120,7 @@ gh attestation verify main.js --repo kchennen/obsidian-scientific-article-card
 ## ⚠️ Known limitations
 
 - Some publishers (e.g. Elsevier / ScienceDirect) block automated page requests. Paste the DOI or PMID instead of the page URL.
-- The preview image is the article's first figure when it is open access in PubMed Central. Otherwise it comes from the publisher page, which many publishers block, so it is best effort.
+- The preview image is the article's first figure when it is open access in PubMed Central. Otherwise it comes from the publisher page, which many publishers block. Articles indexed in PubMed fall back to PubMed's preview image.
 
 ## 👤 Author
 
